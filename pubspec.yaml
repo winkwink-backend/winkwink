@@ -1,0 +1,99 @@
+name: winkwink
+description: App di criptazione e steganografia
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+
+  # 🌍 Localizzazioni
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # 📸 Fotocamera / Galleria / Video
+  image_picker: ^1.0.7
+  camera: ^0.10.5+5
+  video_player: ^2.8.2
+  path_provider: ^2.1.2
+
+  # 🎥 Compressione video universale
+  video_compress: ^3.1.2
+
+  # 🎞 Player video moderno (compatibile con Huawei)
+  media_kit: ^1.1.10
+  media_kit_video: ^1.1.10
+  media_kit_libs_android_video: ^1.1.10
+
+  # 📤 Share Sheet
+  share_plus: ^7.2.1
+
+  # 🖼 Steganografia
+  image: ^4.1.7
+
+  # 🔐 Secure storage
+  flutter_secure_storage: ^9.0.0
+
+  # 🔑 AES encryption
+  encrypt: ^5.0.1
+
+  # 💾 Preferenze
+  shared_preferences: ^2.2.2
+
+  # 📡 QR code
+  qr_flutter: ^4.1.0
+
+  # 🧩 State management
+  provider: ^6.1.2
+
+  # 🎤 AUDIO
+  just_audio: ^0.9.36
+  flutter_sound: ^9.2.13
+  flutter_sound_platform_interface: ^9.2.13
+
+  # 🎙 Permessi microfono
+  permission_handler: ^11.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+  # 🔥 Icona app
+  flutter_launcher_icons: ^0.13.1
+
+  # ⭐ Splash screen
+  flutter_native_splash: ^2.4.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/winkwink_icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/winkwink_icon.png"
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: "assets/icon/marchiologo_winkwink11.png"
+  android: true
+  ios: true
+
+  android_12:
+    image: "assets/icon/marchiologo_winkwink11.png"
+    icon_background_color: "#FFFFFF"
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/
+    - assets/icon/
+    - assets/icon/marchiologo_winkwink11.png

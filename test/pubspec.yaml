@@ -1,0 +1,56 @@
+name: winkwink
+description: App di criptazione e steganografia
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+
+  # 🌍 Localizzazioni
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # 📸 Immagini
+  image_picker: ^1.0.7
+
+  # 📤 Share Sheet
+  share_plus: ^7.2.1
+
+  # 📁 Path
+  path_provider: ^2.1.2
+
+  # 🖼 Steganografia
+  image: ^4.1.7
+
+  # 🔐 Secure storage
+  flutter_secure_storage: ^9.0.0
+
+  # 🔑 AES encryption
+  encrypt: ^5.0.1
+
+  # 💾 Preferenze
+  shared_preferences: ^2.2.2
+
+  # 📡 QR code
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/
+    - assets/icon/
