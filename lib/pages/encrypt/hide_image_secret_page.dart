@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 
 import '../../widgets/winkwink_scaffold.dart';
@@ -19,11 +21,52 @@ class _HideImageSecretPageState extends State<HideImageSecretPage> {
   final ImagePicker _picker = ImagePicker();
   File? hiddenImage;
 
+  // ⭐ Compressione intelligente usando il pacchetto "image"
+  Future<File> compressIfNeeded(File file) async {
+    const int maxSize = 2 * 1024 * 1024; // 2 MB
+    final int fileSize = await file.length();
+
+    if (fileSize <= maxSize) {
+      return file; // troppo piccola → non serve comprimere
+    }
+
+    // Leggi i bytes
+    final Uint8List bytes = await file.readAsBytes();
+    final img.Image? decoded = img.decodeImage(bytes);
+
+    if (decoded == null) return file;
+
+    // Ridimensionamento per tablet (1080p)
+    final img.Image resized = img.copyResize(
+      decoded,
+      width: 1920,
+      height: 1080,
+      interpolation: img.Interpolation.average,
+    );
+
+    // Ricompressione JPEG qualità 80
+    final List<int> compressedBytes = img.encodeJpg(
+      resized,
+      quality: 80,
+    );
+
+    final String newPath = file.path.replaceAll(".jpg", "_compressed.jpg");
+    final File compressedFile = File(newPath);
+
+    await compressedFile.writeAsBytes(compressedBytes);
+
+    return compressedFile;
+  }
+
+  // ⭐ Seleziona immagine + compressione automatica
   Future<void> pickHiddenImage() async {
-    final XFile? img = await _picker.pickImage(source: ImageSource.gallery);
-    if (img != null) {
+    final XFile? imgFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (imgFile != null) {
+      File original = File(imgFile.path);
+      File optimized = await compressIfNeeded(original);
+
       setState(() {
-        hiddenImage = File(img.path);
+        hiddenImage = optimized;
       });
     }
   }
@@ -44,7 +87,7 @@ class _HideImageSecretPageState extends State<HideImageSecretPage> {
             child: IconButton(
               iconSize: 36,
               icon: const Icon(Icons.keyboard_double_arrow_left),
-              color: Colors.black, // ← sempre nera
+              color: Colors.black,
               onPressed: () => Navigator.pop(context),
             ),
           ),

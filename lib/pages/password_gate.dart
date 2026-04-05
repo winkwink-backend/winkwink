@@ -16,6 +16,9 @@ class _PasswordGatePageState extends State<PasswordGatePage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _wrongPassword = false;
 
+  // ⭐ NUOVO: mostra/nascondi password
+  bool _obscurePassword = true;
+
   Future<void> _checkPassword() async {
     final savedPassword = await StorageService.getPassword();
     if (_passwordController.text == savedPassword) {
@@ -32,10 +35,8 @@ class _PasswordGatePageState extends State<PasswordGatePage> {
     final l10n = AppLocalizations.of(context)!;
 
     return WinkWinkScaffold(
-      showColorSelector: false, // niente pallini qui
-
+      showColorSelector: false,
       child: SingleChildScrollView(
-        // ⭐ evita overflow con tastiera
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,21 +60,21 @@ class _PasswordGatePageState extends State<PasswordGatePage> {
 
             const SizedBox(height: 10),
 
-            // 🔥 SOTTOTITOLO (ora nero)
+            // 🔥 SOTTOTITOLO
             Text(
               l10n.passwordGateDescription,
               style: const TextStyle(
                 fontSize: 18,
-                color: Colors.black87, // ⭐ cambiato da bianco → nero
+                color: Colors.black87,
               ),
             ),
 
             const SizedBox(height: 30),
 
-            // 🔥 CAMPO PASSWORD
+            // 🔥 CAMPO PASSWORD CON OCCHIO
             TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscurePassword,
               style: const TextStyle(
                 fontSize: 20,
                 color: Colors.white,
@@ -111,6 +112,19 @@ class _PasswordGatePageState extends State<PasswordGatePage> {
                     color: Colors.white,
                     width: 1.4,
                   ),
+                ),
+
+                // ⭐ AGGIUNTA: icona occhio
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
                 ),
               ),
             ),

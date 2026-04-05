@@ -196,24 +196,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get encryptMissingSelection => 'Select a file to encrypt';
 
   @override
-  String get encryptPickVisible => 'Choose visible image';
-
-  @override
-  String get encryptVisibleSelected => 'Visible image selected';
-
-  @override
-  String get encryptChooseHidden => 'Choose hidden content';
-
-  @override
-  String get encryptHideImage => 'Hide image';
-
-  @override
-  String get encryptHideText => 'Hide text';
-
-  @override
-  String get encryptHideAudio => 'Hide audio';
-
-  @override
   String get galleryEmptyPlaceholder => 'No files found';
 
   @override
@@ -235,7 +217,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPasswordSaved => 'No password saved';
 
   @override
-  String get wrongPassword => 'Wrong password';
+  String get wrongPassword => 'Incorrect password';
 
   @override
   String get passwordGateTitle => 'Security Check';
@@ -253,97 +235,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startupLoading => 'Loading WinkWink...';
 
   @override
-  String get encrypt_title => 'Encrypt';
-
-  @override
-  String get encrypt_subtitle =>
-      'Create your encrypted image to send. Choose a visible image from your gallery, press OK and follow the instructions.';
-
-  @override
-  String get visible_image_button => 'Visible Image';
-
-  @override
-  String get visible_image_subtitle => 'Choose the visible photo';
-
-  @override
-  String get choose_hidden_prompt => 'Choose what you want to hide';
-
-  @override
-  String get hide_image => 'Hide image';
-
-  @override
-  String get hide_text => 'Hide a message';
-
-  @override
-  String get take_photo => 'Take photo';
-
-  @override
-  String get hide_audio => 'Hide audio';
-
-  @override
-  String get ok_button => 'OK';
-
-  @override
-  String get encryptMissingHiddenImage => 'Select the image to hide.';
-
-  @override
-  String get encryptSelectRecipients => 'Select recipients';
-
-  @override
-  String get encryptMissingRecipients => 'Select at least one recipient.';
-
-  @override
-  String get encryptHiddenImageSelected => 'Hidden image selected';
-
-  @override
-  String get decryptMissingImage => 'Select an image to decrypt';
-
-  @override
-  String get decryptSuccess => 'Decryption completed';
-
-  @override
-  String get decryptSuccessMessage =>
-      'The file has been successfully decrypted';
-
-  @override
-  String get decryptPickImage => 'Choose encrypted image';
-
-  @override
-  String get decryptResult => 'Decrypted result';
-
-  @override
-  String get passwordSentTo => 'Password sent to';
-
-  @override
-  String get recoverPassword => 'Recover password';
-
-  @override
-  String get emailAssociated => 'Associated email';
-
-  @override
-  String get sendButton => 'Send';
-
-  @override
   String get winkwinkSubtitle => 'Keeper of secrets';
 
   @override
   String get changeColor => 'Change color';
 
   @override
-  String get encryptTakePhoto => 'Take a photo';
+  String get backButton => 'Back';
 
   @override
-  String get encryptEnterText => 'Enter the text to hide';
+  String get videoTooLarge => 'The video exceeds 100MB. Choose a smaller one.';
+
+  @override
+  String get changeSecret => 'Do you want to change the secret?';
 
   @override
   String get encryptSelectRecipientsSubtitle =>
-      'Choose the contacts you want to send a secret file to';
+      'Choose who you want to share your secret files with';
+
+  @override
+  String get encryptSelectRecipientsTitle =>
+      'Select from your contacts who will receive your secret file, follow the instructions';
+
+  @override
+  String get encryptSelectRecipients => 'Select recipients';
+
+  @override
+  String get encryptContactsButton => 'Contacts';
+
+  @override
+  String get encryptVisibleImageTitle => 'Choose the image visible to everyone';
+
+  @override
+  String get encryptPickVisibleImage => 'Image';
+
+  @override
+  String get encryptWhatToHide => 'What do you want to hide?';
+
+  @override
+  String get encryptHideImage => 'Hide image';
+
+  @override
+  String get encryptHideText => 'Hide text';
+
+  @override
+  String get encryptHideCamera => 'Camera';
+
+  @override
+  String get encryptHideAudio => 'Hide audio';
+
+  @override
+  String get encryptHideVideo => 'Video';
+
+  @override
+  String get encryptSelectedContent => 'Selected content';
+
+  @override
+  String get encryptSecretReady => 'Hidden content ready ✔';
 
   @override
   String get encrypting => 'Encrypting...';
 
   @override
-  String get backButton => 'Back';
+  String get visible_image_button => 'Invisible image';
+
+  @override
+  String get encryptTakePhoto => 'Take photo';
 
   @override
   String get hideImageTitle => 'Hide image';
@@ -358,10 +315,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textSecretSubtitle => 'Write or paste the secret text';
 
   @override
-  String get cameraSecretTitle => 'Capture secret photo';
+  String get cameraSecretTitle => 'Take secret photo';
 
   @override
-  String get cameraSecretSubtitle => 'Use the camera to capture secret content';
+  String get cameraSecretSubtitle =>
+      'Use the camera to capture a secret content';
 
   @override
   String get audioSecretTitle => 'Record secret audio';
@@ -376,15 +334,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get videoSecretSubtitle => 'Record a video to hide';
 
   @override
-  String get recordButton => 'record';
+  String get recordButton => 'Record';
 
   @override
   String get stopButton => 'Stop';
 
   @override
-  String get videoTooLarge =>
-      'The video exceeds 100MB. Please choose a smaller one.';
+  String get decryptPickImage => 'Choose encrypted image';
 
   @override
-  String get changeSecret => 'Do you want to change the secret?';
+  String get decryptResult => 'Decrypted result';
+
+  @override
+  String get decryptMissingImage => 'Select an image to decrypt';
+
+  @override
+  String get decryptSuccess => 'Decryption completed';
+
+  @override
+  String get decryptSuccessMessage =>
+      'The file has been successfully decrypted';
+
+  @override
+  String get passwordSentTo => 'Password sent to';
+
+  @override
+  String get recoverPassword => 'Recover password';
+
+  @override
+  String get emailAssociated => 'Associated email';
+
+  @override
+  String get sendButton => 'Send';
 }

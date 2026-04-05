@@ -197,24 +197,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get encryptMissingSelection => 'Seleziona un file da criptare';
 
   @override
-  String get encryptPickVisible => 'Scegli immagine invisibile';
-
-  @override
-  String get encryptVisibleSelected => 'Immagine visibile selezionata';
-
-  @override
-  String get encryptChooseHidden => 'Scegli contenuto nascosto';
-
-  @override
-  String get encryptHideImage => 'Nascondi immagine';
-
-  @override
-  String get encryptHideText => 'Nascondi testo';
-
-  @override
-  String get encryptHideAudio => 'Nascondi audio';
-
-  @override
   String get galleryEmptyPlaceholder => 'Nessun file trovato';
 
   @override
@@ -254,98 +236,73 @@ class AppLocalizationsIt extends AppLocalizations {
   String get startupLoading => 'Caricamento WinkWink...';
 
   @override
-  String get encrypt_title => 'Cripta';
-
-  @override
-  String get encrypt_subtitle =>
-      'Qui crei la tua immagine criptata che puoi inviare. Apri una immagine dalla tua galleria che sarà visibile a tutti. Clicca su OK e segui le istruzioni.';
-
-  @override
-  String get visible_image_button => 'Immagine Visibile';
-
-  @override
-  String get visible_image_subtitle => 'Scegli la foto visibile';
-
-  @override
-  String get choose_hidden_prompt => 'Scegli cosa vuoi nascondere';
-
-  @override
-  String get hide_image => 'Nascondi immagine';
-
-  @override
-  String get hide_text => 'Nascondi un messaggio';
-
-  @override
-  String get take_photo => 'Scatta foto';
-
-  @override
-  String get hide_audio => 'Nascondi un audio';
-
-  @override
-  String get ok_button => 'OK';
-
-  @override
-  String get encryptMissingHiddenImage =>
-      'Seleziona l\'immagine da nascondere.';
-
-  @override
-  String get encryptSelectRecipients => 'Seleziona i destinatari';
-
-  @override
-  String get encryptMissingRecipients => 'Seleziona almeno un destinatario.';
-
-  @override
-  String get encryptHiddenImageSelected => 'Immagine nascosta selezionata';
-
-  @override
-  String get decryptMissingImage => 'Seleziona un\'immagine da decriptare';
-
-  @override
-  String get decryptSuccess => 'Decriptazione completata';
-
-  @override
-  String get decryptSuccessMessage =>
-      'Il file è stato decriptato correttamente';
-
-  @override
-  String get decryptPickImage => 'Scegli immagine criptata';
-
-  @override
-  String get decryptResult => 'Risultato decriptato';
-
-  @override
-  String get passwordSentTo => 'Password inviata a';
-
-  @override
-  String get recoverPassword => 'Recupera password';
-
-  @override
-  String get emailAssociated => 'Email associata';
-
-  @override
-  String get sendButton => 'Invia';
-
-  @override
   String get winkwinkSubtitle => 'Custode dei segreti';
 
   @override
   String get changeColor => 'Cambia il colore';
 
   @override
-  String get encryptTakePhoto => 'Scatta una foto';
+  String get backButton => 'Indietro';
 
   @override
-  String get encryptEnterText => 'Inserisci il testo da nascondere';
+  String get videoTooLarge =>
+      'Il video supera i 100MB. Scegline uno più leggero.';
+
+  @override
+  String get changeSecret => 'Vuoi cambiare segreto?';
 
   @override
   String get encryptSelectRecipientsSubtitle =>
-      'Scegli i contatti a cui vuoi mandare un tuo file segreto';
+      'Scegli con chi vuoi condividere i tuoi file segreti';
+
+  @override
+  String get encryptSelectRecipientsTitle =>
+      'Seleziona tra i contatti a chi vuoi mandare un tuo file segreto, segui le istruzioni';
+
+  @override
+  String get encryptSelectRecipients => 'Seleziona destinatari';
+
+  @override
+  String get encryptContactsButton => 'Contatti';
+
+  @override
+  String get encryptVisibleImageTitle => 'Scegli immagine visibile a tutti';
+
+  @override
+  String get encryptPickVisibleImage => 'Immagine';
+
+  @override
+  String get encryptWhatToHide => 'Cosa vuoi nascondere?';
+
+  @override
+  String get encryptHideImage => 'Nascondi immagine';
+
+  @override
+  String get encryptHideText => 'Nascondi testo';
+
+  @override
+  String get encryptHideCamera => 'Fotocamera';
+
+  @override
+  String get encryptHideAudio => 'Nascondi audio';
+
+  @override
+  String get encryptHideVideo => 'Video';
+
+  @override
+  String get encryptSelectedContent => 'Contenuto selezionato';
+
+  @override
+  String get encryptSecretReady => 'Contenuto nascosto pronto ✔';
 
   @override
   String get encrypting => 'Criptazione in corso...';
 
   @override
-  String get backButton => 'Indietro';
+  String get visible_image_button => 'Immagine invisibile';
+
+  @override
+  String get encryptTakePhoto => 'Scatta foto';
 
   @override
   String get hideImageTitle => 'Nascondi immagine';
@@ -386,9 +343,30 @@ class AppLocalizationsIt extends AppLocalizations {
   String get stopButton => 'Stop';
 
   @override
-  String get videoTooLarge =>
-      'Il video supera i 100MB. Scegline uno più leggero.';
+  String get decryptPickImage => 'Scegli immagine criptata';
 
   @override
-  String get changeSecret => 'Vuoi cambiare segreto?';
+  String get decryptResult => 'Risultato decriptato';
+
+  @override
+  String get decryptMissingImage => 'Seleziona un\'immagine da decriptare';
+
+  @override
+  String get decryptSuccess => 'Decriptazione completata';
+
+  @override
+  String get decryptSuccessMessage =>
+      'Il file è stato decriptato correttamente';
+
+  @override
+  String get passwordSentTo => 'Password inviata a';
+
+  @override
+  String get recoverPassword => 'Recupera password';
+
+  @override
+  String get emailAssociated => 'Email associata';
+
+  @override
+  String get sendButton => 'Invia';
 }

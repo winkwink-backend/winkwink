@@ -464,42 +464,6 @@ abstract class AppLocalizations {
   /// **'Select a file to encrypt'**
   String get encryptMissingSelection;
 
-  /// No description provided for @encryptPickVisible.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose visible image'**
-  String get encryptPickVisible;
-
-  /// No description provided for @encryptVisibleSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Visible image selected'**
-  String get encryptVisibleSelected;
-
-  /// No description provided for @encryptChooseHidden.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose hidden content'**
-  String get encryptChooseHidden;
-
-  /// No description provided for @encryptHideImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide image'**
-  String get encryptHideImage;
-
-  /// No description provided for @encryptHideText.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide text'**
-  String get encryptHideText;
-
-  /// No description provided for @encryptHideAudio.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide audio'**
-  String get encryptHideAudio;
-
   /// No description provided for @galleryEmptyPlaceholder.
   ///
   /// In en, this message translates to:
@@ -545,7 +509,7 @@ abstract class AppLocalizations {
   /// No description provided for @wrongPassword.
   ///
   /// In en, this message translates to:
-  /// **'Wrong password'**
+  /// **'Incorrect password'**
   String get wrongPassword;
 
   /// No description provided for @passwordGateTitle.
@@ -578,144 +542,6 @@ abstract class AppLocalizations {
   /// **'Loading WinkWink...'**
   String get startupLoading;
 
-  /// No description provided for @encrypt_title.
-  ///
-  /// In en, this message translates to:
-  /// **'Encrypt'**
-  String get encrypt_title;
-
-  /// No description provided for @encrypt_subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Create your encrypted image to send. Choose a visible image from your gallery, press OK and follow the instructions.'**
-  String get encrypt_subtitle;
-
-  /// No description provided for @visible_image_button.
-  ///
-  /// In en, this message translates to:
-  /// **'Visible Image'**
-  String get visible_image_button;
-
-  /// No description provided for @visible_image_subtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose the visible photo'**
-  String get visible_image_subtitle;
-
-  /// No description provided for @choose_hidden_prompt.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose what you want to hide'**
-  String get choose_hidden_prompt;
-
-  /// No description provided for @hide_image.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide image'**
-  String get hide_image;
-
-  /// No description provided for @hide_text.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide a message'**
-  String get hide_text;
-
-  /// No description provided for @take_photo.
-  ///
-  /// In en, this message translates to:
-  /// **'Take photo'**
-  String get take_photo;
-
-  /// No description provided for @hide_audio.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide audio'**
-  String get hide_audio;
-
-  /// No description provided for @ok_button.
-  ///
-  /// In en, this message translates to:
-  /// **'OK'**
-  String get ok_button;
-
-  /// No description provided for @encryptMissingHiddenImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Select the image to hide.'**
-  String get encryptMissingHiddenImage;
-
-  /// No description provided for @encryptSelectRecipients.
-  ///
-  /// In en, this message translates to:
-  /// **'Select recipients'**
-  String get encryptSelectRecipients;
-
-  /// No description provided for @encryptMissingRecipients.
-  ///
-  /// In en, this message translates to:
-  /// **'Select at least one recipient.'**
-  String get encryptMissingRecipients;
-
-  /// No description provided for @encryptHiddenImageSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Hidden image selected'**
-  String get encryptHiddenImageSelected;
-
-  /// No description provided for @decryptMissingImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Select an image to decrypt'**
-  String get decryptMissingImage;
-
-  /// No description provided for @decryptSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Decryption completed'**
-  String get decryptSuccess;
-
-  /// No description provided for @decryptSuccessMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'The file has been successfully decrypted'**
-  String get decryptSuccessMessage;
-
-  /// No description provided for @decryptPickImage.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose encrypted image'**
-  String get decryptPickImage;
-
-  /// No description provided for @decryptResult.
-  ///
-  /// In en, this message translates to:
-  /// **'Decrypted result'**
-  String get decryptResult;
-
-  /// No description provided for @passwordSentTo.
-  ///
-  /// In en, this message translates to:
-  /// **'Password sent to'**
-  String get passwordSentTo;
-
-  /// No description provided for @recoverPassword.
-  ///
-  /// In en, this message translates to:
-  /// **'Recover password'**
-  String get recoverPassword;
-
-  /// No description provided for @emailAssociated.
-  ///
-  /// In en, this message translates to:
-  /// **'Associated email'**
-  String get emailAssociated;
-
-  /// No description provided for @sendButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Send'**
-  String get sendButton;
-
   /// No description provided for @winkwinkSubtitle.
   ///
   /// In en, this message translates to:
@@ -728,23 +554,107 @@ abstract class AppLocalizations {
   /// **'Change color'**
   String get changeColor;
 
-  /// No description provided for @encryptTakePhoto.
+  /// No description provided for @backButton.
   ///
   /// In en, this message translates to:
-  /// **'Take a photo'**
-  String get encryptTakePhoto;
+  /// **'Back'**
+  String get backButton;
 
-  /// No description provided for @encryptEnterText.
+  /// No description provided for @videoTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'Enter the text to hide'**
-  String get encryptEnterText;
+  /// **'The video exceeds 100MB. Choose a smaller one.'**
+  String get videoTooLarge;
+
+  /// No description provided for @changeSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to change the secret?'**
+  String get changeSecret;
 
   /// No description provided for @encryptSelectRecipientsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose the contacts you want to send a secret file to'**
+  /// **'Choose who you want to share your secret files with'**
   String get encryptSelectRecipientsSubtitle;
+
+  /// No description provided for @encryptSelectRecipientsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from your contacts who will receive your secret file, follow the instructions'**
+  String get encryptSelectRecipientsTitle;
+
+  /// No description provided for @encryptSelectRecipients.
+  ///
+  /// In en, this message translates to:
+  /// **'Select recipients'**
+  String get encryptSelectRecipients;
+
+  /// No description provided for @encryptContactsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Contacts'**
+  String get encryptContactsButton;
+
+  /// No description provided for @encryptVisibleImageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the image visible to everyone'**
+  String get encryptVisibleImageTitle;
+
+  /// No description provided for @encryptPickVisibleImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get encryptPickVisibleImage;
+
+  /// No description provided for @encryptWhatToHide.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to hide?'**
+  String get encryptWhatToHide;
+
+  /// No description provided for @encryptHideImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide image'**
+  String get encryptHideImage;
+
+  /// No description provided for @encryptHideText.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide text'**
+  String get encryptHideText;
+
+  /// No description provided for @encryptHideCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get encryptHideCamera;
+
+  /// No description provided for @encryptHideAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide audio'**
+  String get encryptHideAudio;
+
+  /// No description provided for @encryptHideVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get encryptHideVideo;
+
+  /// No description provided for @encryptSelectedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected content'**
+  String get encryptSelectedContent;
+
+  /// No description provided for @encryptSecretReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden content ready ✔'**
+  String get encryptSecretReady;
 
   /// No description provided for @encrypting.
   ///
@@ -752,11 +662,17 @@ abstract class AppLocalizations {
   /// **'Encrypting...'**
   String get encrypting;
 
-  /// No description provided for @backButton.
+  /// No description provided for @visible_image_button.
   ///
   /// In en, this message translates to:
-  /// **'Back'**
-  String get backButton;
+  /// **'Invisible image'**
+  String get visible_image_button;
+
+  /// No description provided for @encryptTakePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get encryptTakePhoto;
 
   /// No description provided for @hideImageTitle.
   ///
@@ -785,13 +701,13 @@ abstract class AppLocalizations {
   /// No description provided for @cameraSecretTitle.
   ///
   /// In en, this message translates to:
-  /// **'Capture secret photo'**
+  /// **'Take secret photo'**
   String get cameraSecretTitle;
 
   /// No description provided for @cameraSecretSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Use the camera to capture secret content'**
+  /// **'Use the camera to capture a secret content'**
   String get cameraSecretSubtitle;
 
   /// No description provided for @audioSecretTitle.
@@ -821,7 +737,7 @@ abstract class AppLocalizations {
   /// No description provided for @recordButton.
   ///
   /// In en, this message translates to:
-  /// **'record'**
+  /// **'Record'**
   String get recordButton;
 
   /// No description provided for @stopButton.
@@ -830,17 +746,59 @@ abstract class AppLocalizations {
   /// **'Stop'**
   String get stopButton;
 
-  /// No description provided for @videoTooLarge.
+  /// No description provided for @decryptPickImage.
   ///
   /// In en, this message translates to:
-  /// **'The video exceeds 100MB. Please choose a smaller one.'**
-  String get videoTooLarge;
+  /// **'Choose encrypted image'**
+  String get decryptPickImage;
 
-  /// No description provided for @changeSecret.
+  /// No description provided for @decryptResult.
   ///
   /// In en, this message translates to:
-  /// **'Do you want to change the secret?'**
-  String get changeSecret;
+  /// **'Decrypted result'**
+  String get decryptResult;
+
+  /// No description provided for @decryptMissingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an image to decrypt'**
+  String get decryptMissingImage;
+
+  /// No description provided for @decryptSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Decryption completed'**
+  String get decryptSuccess;
+
+  /// No description provided for @decryptSuccessMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The file has been successfully decrypted'**
+  String get decryptSuccessMessage;
+
+  /// No description provided for @passwordSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Password sent to'**
+  String get passwordSentTo;
+
+  /// No description provided for @recoverPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover password'**
+  String get recoverPassword;
+
+  /// No description provided for @emailAssociated.
+  ///
+  /// In en, this message translates to:
+  /// **'Associated email'**
+  String get emailAssociated;
+
+  /// No description provided for @sendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get sendButton;
 }
 
 class _AppLocalizationsDelegate

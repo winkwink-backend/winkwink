@@ -283,23 +283,32 @@ class _VideoCameraB4State extends State<VideoCameraB4>
               ),
             ),
 
-          // TIMER COUNTDOWN
+          // TIMER COUNTDOWN CON CERCHIO DI SFONDO
           if (isRecording)
             Positioned(
               top: 40,
               left: 0,
               right: 0,
               child: Center(
-                child: Text(
-                  "$seconds",
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: seconds <= 2
-                        ? Colors.redAccent
-                        : seconds <= 3
-                            ? theme.primary
-                            : Colors.white,
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.85),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.primary,
+                      width: 3,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "$seconds",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: seconds <= 2 ? Colors.redAccent : Colors.black,
+                    ),
                   ),
                 ),
               ),

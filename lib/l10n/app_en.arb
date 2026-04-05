@@ -1,5 +1,6 @@
 {
   "appTitle": "WinkWink",
+
   "loginTitle": "Welcome to WinkWink",
   "loginDescription": "Enter your details to begin.",
   "requiredField": "Required field",
@@ -20,37 +21,48 @@
   "generateIdButton": "Generate ID",
   "profileCreatedFor": "Profile created for",
   "loginButton": "Login",
+
   "sendQrTitle": "Send QR Code",
   "sendQrDescription": "Share this QR with your contacts",
   "sendQrButton": "Send QR",
+
   "scanQrTitle": "Scan QR",
   "scanQrDescription": "Scan a contact's QR code",
   "scanQrButton": "Scan QR",
+
   "encryptTitle": "Encrypt File",
   "encryptDescription": "Hide a file inside an image",
   "encryptButton": "Encrypt Now",
   "encryptError": "Encryption Error",
   "encryptReady": "File Ready",
   "encryptReadyMessage": "Your file has been successfully encrypted",
+
   "decryptTitle": "Decrypt File",
   "decryptDescription": "Extract a hidden file",
   "decryptButton": "Decrypt Now",
   "decryptError": "Decryption Error",
   "decryptReady": "File Decrypted",
   "decryptReadyMessage": "The hidden file has been successfully extracted",
+
   "encryptButtonHome": "Encrypt",
   "decryptButtonHome": "Decrypt",
+
   "galleryTitle": "Secure Gallery",
   "galleryButton": "Gallery",
+
   "contactsTitle": "Contacts",
   "contactsButton": "Contacts",
   "searchContacts": "Search contacts...",
+
   "giveQr": "Send QR to",
+
   "passepartoutTitle": "Master Key",
   "passepartoutButton": "Master Key",
+
   "faqTitle": "FAQ & Help",
   "faqButton": "FAQ",
   "faqContent": "WinkWink uses steganography to hide your files...",
+
   "errorTitle": "Error",
   "okButton": "OK",
   "invalidQr": "Invalid QR code",
@@ -59,65 +71,62 @@
   "shareQrSubject": "WinkWink Contact",
   "internalQrData": "Internal Data",
   "forwardButton": "Forward",
+
   "encryptMissingSelection": "Select a file to encrypt",
-  "encryptPickVisible": "Choose visible image",
-  "encryptVisibleSelected": "Visible image selected",
-  "encryptChooseHidden": "Choose hidden content",
-  "encryptHideImage": "Hide image",
-  "encryptHideText": "Hide text",
-  "encryptHideAudio": "Hide audio",
+
   "galleryEmptyPlaceholder": "No files found",
   "fileLabel": "File",
   "fileTypeLabel": "Type",
+
   "scanQrPlaceholderTitle": "Scan QR",
   "scanQrPlaceholderMessage": "Point at a WinkWink QR code",
+
   "passepartoutPlaceholder": "Your master keys will appear here",
   "noPasswordSaved": "No password saved",
-  "wrongPassword": "Wrong password",
+  "wrongPassword": "Incorrect password",
   "passwordGateTitle": "Security Check",
   "passwordGateDescription": "Enter your password to continue",
   "passwordLabelShort": "Password",
   "accessButton": "Access",
+
   "startupLoading": "Loading WinkWink...",
-  "encrypt_title": "Encrypt",
-  "encrypt_subtitle": "Create your encrypted image to send. Choose a visible image from your gallery, press OK and follow the instructions.",
-  "visible_image_button": "Visible Image",
-  "visible_image_subtitle": "Choose the visible photo",
-  "choose_hidden_prompt": "Choose what you want to hide",
-  "hide_image": "Hide image",
-  "hide_text": "Hide a message",
-  "take_photo": "Take photo",
-  "hide_audio": "Hide audio",
-  "ok_button": "OK",
-  "encryptMissingHiddenImage": "Select the image to hide.",
-  "encryptSelectRecipients": "Select recipients",
-  "encryptMissingRecipients": "Select at least one recipient.",
-  "encryptHiddenImageSelected": "Hidden image selected",
-  "decryptMissingImage": "Select an image to decrypt",
-  "decryptSuccess": "Decryption completed",
-  "decryptSuccessMessage": "The file has been successfully decrypted",
-  "decryptPickImage": "Choose encrypted image",
-  "decryptResult": "Decrypted result",
-  "passwordSentTo": "Password sent to",
-  "recoverPassword": "Recover password",
-  "emailAssociated": "Associated email",
-  "sendButton": "Send",
+
   "winkwinkSubtitle": "Keeper of secrets",
   "changeColor": "Change color",
-
-  "encryptTakePhoto": "Take a photo",
-  "encryptEnterText": "Enter the text to hide",
-  "encryptSelectRecipientsSubtitle": "Choose the contacts you want to send a secret file to",
-  "encrypting": "Encrypting...",
   "backButton": "Back",
+
+  "videoTooLarge": "The video exceeds 100MB. Choose a smaller one.",
+
+  "changeSecret": "Do you want to change the secret?",
+
+  "encryptSelectRecipientsSubtitle": "Choose who you want to share your secret files with",
+  "encryptSelectRecipientsTitle": "Select from your contacts who will receive your secret file, follow the instructions",
+  "encryptSelectRecipients": "Select recipients",
+
+  "encryptContactsButton": "Contacts",
+  "encryptVisibleImageTitle": "Choose the image visible to everyone",
+  "encryptPickVisibleImage": "Image",
+  "encryptWhatToHide": "What do you want to hide?",
+  "encryptHideImage": "Hide image",
+  "encryptHideText": "Hide text",
+  "encryptHideCamera": "Camera",
+  "encryptHideAudio": "Hide audio",
+  "encryptHideVideo": "Video",
+  "encryptSelectedContent": "Selected content",
+  "encryptSecretReady": "Hidden content ready ✔",
+  "encrypting": "Encrypting...",
+
+  "visible_image_button": "Invisible image",
+  "encryptTakePhoto": "Take photo",
+
   "hideImageTitle": "Hide image",
   "hideImageSubtitle": "Select the secret image to hide",
 
   "textSecretTitle": "Hide text",
   "textSecretSubtitle": "Write or paste the secret text",
 
-  "cameraSecretTitle": "Capture secret photo",
-  "cameraSecretSubtitle": "Use the camera to capture secret content",
+  "cameraSecretTitle": "Take secret photo",
+  "cameraSecretSubtitle": "Use the camera to capture a secret content",
 
   "audioSecretTitle": "Record secret audio",
   "audioSecretSubtitle": "Record a voice message to hide",
@@ -125,10 +134,17 @@
   "videoSecretTitle": "Record secret video",
   "videoSecretSubtitle": "Record a video to hide",
 
-  "recordButton": "record",
+  "recordButton": "Record",
   "stopButton": "Stop",
 
-  "videoTooLarge": "The video exceeds 100MB. Please choose a smaller one.",
+  "decryptPickImage": "Choose encrypted image",
+  "decryptResult": "Decrypted result",
+  "decryptMissingImage": "Select an image to decrypt",
+  "decryptSuccess": "Decryption completed",
+  "decryptSuccessMessage": "The file has been successfully decrypted",
 
-  "changeSecret": "Do you want to change the secret?"
+  "passwordSentTo": "Password sent to",
+  "recoverPassword": "Recover password",
+  "emailAssociated": "Associated email",
+  "sendButton": "Send"
 }

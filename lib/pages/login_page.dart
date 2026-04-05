@@ -19,6 +19,10 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  // ⭐ NUOVO: mostra/nascondi password
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   bool isAlphanumeric(String s) {
     final regex = RegExp(r'^[a-zA-Z0-9]+$');
     return regex.hasMatch(s);
@@ -116,18 +120,30 @@ class _LoginPageState extends State<LoginPage> {
 
             const SizedBox(height: 12),
 
+            // ⭐ PASSWORD CON OCCHIO
             _buildField(
               controller: passwordController,
               label: l10n.passwordLabel,
-              obscure: true,
+              obscure: _obscurePassword,
+              onToggleVisibility: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
             ),
 
             const SizedBox(height: 12),
 
+            // ⭐ CONFERMA PASSWORD CON OCCHIO
             _buildField(
               controller: confirmPasswordController,
               label: l10n.confirmPasswordLabel,
-              obscure: true,
+              obscure: _obscureConfirmPassword,
+              onToggleVisibility: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
             ),
 
             const SizedBox(height: 30),
@@ -181,6 +197,7 @@ class _LoginPageState extends State<LoginPage> {
     required TextEditingController controller,
     required String label,
     bool obscure = false,
+    VoidCallback? onToggleVisibility,
   }) {
     return TextField(
       controller: controller,
@@ -203,6 +220,17 @@ class _LoginPageState extends State<LoginPage> {
           borderSide: BorderSide(color: Colors.black),
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
+
+        // ⭐ AGGIUNTA: icona occhio
+        suffixIcon: onToggleVisibility == null
+            ? null
+            : IconButton(
+                icon: Icon(
+                  obscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.black87,
+                ),
+                onPressed: onToggleVisibility,
+              ),
       ),
     );
   }

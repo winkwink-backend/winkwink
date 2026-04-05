@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
@@ -27,11 +29,49 @@ class _EncryptPageState extends State<EncryptPage> {
 
   bool showSecretReadyBanner = false;
 
+  // ⭐ Compressione intelligente usando il pacchetto "image"
+  Future<File> compressIfNeeded(File file) async {
+    const int maxSize = 2 * 1024 * 1024; // 2 MB
+    final int fileSize = await file.length();
+
+    if (fileSize <= maxSize) {
+      return file; // troppo piccola → non serve comprimere
+    }
+
+    final Uint8List bytes = await file.readAsBytes();
+    final img.Image? decoded = img.decodeImage(bytes);
+
+    if (decoded == null) return file;
+
+    final img.Image resized = img.copyResize(
+      decoded,
+      width: 1920,
+      height: 1080,
+      interpolation: img.Interpolation.average,
+    );
+
+    final List<int> compressedBytes = img.encodeJpg(
+      resized,
+      quality: 80,
+    );
+
+    final String newPath = file.path.replaceAll(".jpg", "_compressed.jpg");
+    final File compressedFile = File(newPath);
+
+    await compressedFile.writeAsBytes(compressedBytes);
+
+    return compressedFile;
+  }
+
+  // ⭐ Seleziona immagine visibile + compressione automatica
   Future<void> pickVisibleImage() async {
-    final XFile? img = await _picker.pickImage(source: ImageSource.gallery);
-    if (img != null) {
+    final XFile? imgFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (imgFile != null) {
+      File original = File(imgFile.path);
+      File optimized = await compressIfNeeded(original);
+
       setState(() {
-        visibleImage = File(img.path);
+        visibleImage = optimized;
       });
     }
   }
@@ -79,10 +119,10 @@ class _EncryptPageState extends State<EncryptPage> {
                 color: Colors.green.shade600,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                "Contenuto nascosto pronto ✔",
+              child: Text(
+                l10n.encryptSecretReady,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
 
@@ -105,10 +145,10 @@ class _EncryptPageState extends State<EncryptPage> {
 
           const SizedBox(height: 10),
 
-          const Text(
-            "Scegli con chi vuoi condividere i tuoi file segreti",
+          Text(
+            l10n.encryptSelectRecipientsTitle,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 16,
             ),
@@ -118,7 +158,7 @@ class _EncryptPageState extends State<EncryptPage> {
 
           // 🔘 STEP 1 — CONTATTI
           MiniNeonButton(
-            label: "Contatti",
+            label: l10n.encryptContactsButton,
             icon: Icons.contacts,
             onPressed: () async {
               final result = await Navigator.pushNamed(
@@ -136,10 +176,10 @@ class _EncryptPageState extends State<EncryptPage> {
           if (selectedContacts.isNotEmpty) ...[
             const SizedBox(height: 30),
 
-            const Text(
-              "Scegli immagine visibile a tutti",
+            Text(
+              l10n.encryptVisibleImageTitle,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -150,7 +190,7 @@ class _EncryptPageState extends State<EncryptPage> {
 
             // 🔘 STEP 2 — IMMAGINE VISIBILE
             MiniNeonButton(
-              label: "Immagine",
+              label: l10n.encryptPickVisibleImage,
               icon: Icons.image,
               onPressed: pickVisibleImage,
             ),
@@ -168,25 +208,20 @@ class _EncryptPageState extends State<EncryptPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
-
-              const Text(
-                "Cosa vuoi nascondere?",
+              Text(
+                l10n.encryptWhatToHide,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // ⭐ SE NON È STATO SCELTO ANCORA UN SEGRETO
               if (selectedSecret == null) ...[
                 MiniNeonButton(
-                  label: "Nascondi immagine",
+                  label: l10n.encryptHideImage,
                   icon: Icons.image,
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
@@ -198,7 +233,7 @@ class _EncryptPageState extends State<EncryptPage> {
                   },
                 ),
                 MiniNeonButton(
-                  label: "Testo",
+                  label: l10n.encryptHideText,
                   icon: Icons.text_fields,
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
@@ -210,7 +245,7 @@ class _EncryptPageState extends State<EncryptPage> {
                   },
                 ),
                 MiniNeonButton(
-                  label: "Fotocamera",
+                  label: l10n.encryptHideCamera,
                   icon: Icons.photo_camera,
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
@@ -222,7 +257,7 @@ class _EncryptPageState extends State<EncryptPage> {
                   },
                 ),
                 MiniNeonButton(
-                  label: "Audio",
+                  label: l10n.encryptHideAudio,
                   icon: Icons.mic,
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
@@ -234,7 +269,7 @@ class _EncryptPageState extends State<EncryptPage> {
                   },
                 ),
                 MiniNeonButton(
-                  label: "Video",
+                  label: l10n.encryptHideVideo,
                   icon: Icons.videocam,
                   onPressed: () async {
                     final result = await Navigator.pushNamed(
@@ -246,26 +281,19 @@ class _EncryptPageState extends State<EncryptPage> {
                   },
                 ),
               ],
-
-              // ⭐ SE IL SEGRETO È GIÀ STATO SCELTO
               if (selectedSecret != null) ...[
                 const SizedBox(height: 20),
-
-                // ⭐ TESTO ORA COLOR OCRA
                 Center(
                   child: Text(
-                    "Contenuto selezionato: ${selectedSecret!['type']}",
+                    "${l10n.encryptSelectedContent}: ${selectedSecret!['type']}",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFFC99700), // ⭐ OCRA
+                      color: Color(0xFFC99700),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // ⭐ PULSANTE CAMBIA SEGRETO
                 Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -291,22 +319,20 @@ class _EncryptPageState extends State<EncryptPage> {
                     ),
                   ),
                 ),
+
+                // ⭐ MOSTRA "CRIPTA ORA" SOLO QUANDO IL SEGRETO È SCELTO
+                const SizedBox(height: 30),
+
+                MiniNeonButton(
+                  label: l10n.encryptButton,
+                  icon: Icons.lock,
+                  onPressed: () {
+                    // 🔥 Steganografia + share sheet
+                  },
+                ),
               ],
             ],
           ],
-
-          const SizedBox(height: 30),
-
-          // 🔘 CRIPTA ORA
-          MiniNeonButton(
-            label: "Cripta Ora",
-            icon: Icons.lock,
-            onPressed: selectedSecret == null
-                ? () {}
-                : () {
-                    // 🔥 Steganografia + share sheet
-                  },
-          ),
         ],
       ),
     );
