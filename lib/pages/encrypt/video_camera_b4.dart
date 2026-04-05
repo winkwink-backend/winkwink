@@ -15,7 +15,8 @@ class VideoCameraB4 extends StatefulWidget {
   State<VideoCameraB4> createState() => _VideoCameraB4State();
 }
 
-class _VideoCameraB4State extends State<VideoCameraB4> {
+class _VideoCameraB4State extends State<VideoCameraB4>
+    with TickerProviderStateMixin {
   CameraController? cameraController;
   List<CameraDescription>? cameras;
 
@@ -23,18 +24,31 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
   bool isInitialized = false;
 
   Timer? timer;
-  int seconds = 0;
-  final int maxSeconds = 15;
+  int seconds = 15; // countdown
 
   File? recordedVideo;
   VideoPlayerController? videoController;
 
   CameraDescription? currentCamera;
 
+  // 🔥 Animazione pulse
+  late AnimationController pulseController;
+  late Animation<double> pulseAnimation;
+
   @override
   void initState() {
     super.initState();
     initCamera();
+
+    // Animazione pulsazione
+    pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+
+    pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: pulseController, curve: Curves.easeInOut),
+    );
   }
 
   Future<void> initCamera() async {
@@ -58,7 +72,6 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
 
     try {
       await cameraController!.initialize();
-      // FIX AUDIO: Preparazione hardware
       await cameraController!.prepareForVideoRecording();
     } catch (e) {
       debugPrint("❌ Errore camera: $e");
@@ -96,12 +109,13 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
 
       setState(() {
         isRecording = true;
-        seconds = 0;
+        seconds = 15; // reset countdown
       });
 
       timer = Timer.periodic(const Duration(seconds: 1), (t) {
-        setState(() => seconds++);
-        if (seconds >= maxSeconds) stopRecording();
+        setState(() => seconds--);
+
+        if (seconds <= 0) stopRecording();
       });
     } catch (e) {
       debugPrint("❌ Errore registrazione: $e");
@@ -158,9 +172,83 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
   @override
   void dispose() {
     timer?.cancel();
+    pulseController.dispose();
     safeDisposeCamera();
     safeDisposeVideo();
     super.dispose();
+  }
+
+  // Cornice stile UI
+  Widget framed(Widget child, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: color, width: 4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: child,
+      ),
+    );
+  }
+
+  // Pulsante di registrazione con pulse + glow
+  Widget recordButton(Color color) {
+    return ScaleTransition(
+      scale: isRecording ? pulseAnimation : const AlwaysStoppedAnimation(1.0),
+      child: Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 6),
+          boxShadow: [
+            if (isRecording)
+              BoxShadow(
+                color: color.withOpacity(0.7),
+                blurRadius: 25,
+                spreadRadius: 5,
+              ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: () => isRecording ? stopRecording() : startRecording(),
+          child: Center(
+            child: Container(
+              width: 65,
+              height: 65,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isRecording ? Colors.redAccent : color,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Pulsante tondo con glow
+  Widget glowButton(IconData icon, VoidCallback onTap, Color color) {
+    return Container(
+      width: 65,
+      height: 65,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.6),
+            blurRadius: 20,
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.black, size: 32),
+        onPressed: onTap,
+      ),
+    );
   }
 
   @override
@@ -171,50 +259,31 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Anteprima Camera
+          // CAMERA PREVIEW INCORNICIATA
           if (recordedVideo == null)
             Positioned.fill(
               child: isInitialized
-                  ? CameraPreview(cameraController!)
+                  ? framed(CameraPreview(cameraController!), theme.primary)
                   : const Center(child: CircularProgressIndicator()),
             ),
 
-          // Anteprima Video Registrato
+          // VIDEO PLAYER INCORNICIATO
           if (recordedVideo != null &&
               videoController != null &&
               videoController!.value.isInitialized)
             Positioned.fill(
               child: Center(
-                child: AspectRatio(
-                  aspectRatio: videoController!.value.aspectRatio,
-                  child: VideoPlayer(videoController!),
+                child: framed(
+                  AspectRatio(
+                    aspectRatio: videoController!.value.aspectRatio,
+                    child: VideoPlayer(videoController!),
+                  ),
+                  theme.primary,
                 ),
               ),
             ),
 
-          // Tasto Chiudi
-          Positioned(
-            top: 40,
-            left: 20,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 36),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-
-          // Tasto Switch
-          if (!isRecording && recordedVideo == null && isInitialized)
-            Positioned(
-              top: 40,
-              right: 20,
-              child: IconButton(
-                icon: const Icon(Icons.cameraswitch,
-                    color: Colors.white, size: 36),
-                onPressed: switchCamera,
-              ),
-            ),
-
-          // Timer
+          // TIMER COUNTDOWN
           if (isRecording)
             Positioned(
               top: 40,
@@ -222,38 +291,38 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
               right: 0,
               child: Center(
                 child: Text(
-                  "$seconds / $maxSeconds",
+                  "$seconds",
                   style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: theme.primary),
-                ),
-              ),
-            ),
-
-          // Tasto Registra
-          if (recordedVideo == null)
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => isRecording ? stopRecording() : startRecording(),
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isRecording ? Colors.redAccent : theme.primary,
-                      border: Border.all(color: Colors.white, width: 4),
-                    ),
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: seconds <= 2
+                        ? Colors.redAccent
+                        : seconds <= 3
+                            ? theme.primary
+                            : Colors.white,
                   ),
                 ),
               ),
             ),
 
-          // Azioni Post-Registrazione
+          // BARRA INFERIORE (X - RECORD - SWITCH)
+          if (recordedVideo == null)
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  glowButton(
+                      Icons.close, () => Navigator.pop(context), theme.primary),
+                  recordButton(theme.primary),
+                  glowButton(Icons.cameraswitch, switchCamera, theme.primary),
+                ],
+              ),
+            ),
+
+          // POST-REGISTRAZIONE
           if (recordedVideo != null)
             Positioned(
               bottom: 40,
@@ -262,17 +331,11 @@ class _VideoCameraB4State extends State<VideoCameraB4> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.delete,
-                        color: Colors.redAccent, size: 40),
-                    onPressed: deleteVideo,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.check_circle,
-                        color: Colors.greenAccent, size: 40),
-                    onPressed: () =>
-                        Navigator.pop(context, {"file": recordedVideo}),
-                  ),
+                  glowButton(Icons.delete, deleteVideo, theme.primary),
+                  glowButton(
+                      Icons.check,
+                      () => Navigator.pop(context, {"file": recordedVideo}),
+                      theme.primary),
                 ],
               ),
             ),
