@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
 import '../services/storage_service.dart';
+import '../services/ecc_service.dart';
 import '../widgets/winkwink_scaffold.dart';
 import '../routes.dart';
 
@@ -19,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  // ⭐ NUOVO: mostra/nascondi password
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -62,6 +62,9 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    // ------------------------------------------------------------
+    // 🔥 1. Salva profilo utente
+    // ------------------------------------------------------------
     await StorageService.saveProfile(
       name: name,
       surname: surname,
@@ -69,9 +72,44 @@ class _LoginPageState extends State<LoginPage> {
       password: password,
     );
 
+    // ------------------------------------------------------------
+    // 🔥 2. Genera coppia ECC personale
+    // ------------------------------------------------------------
+    final ecc = ECCService();
+    final keyPair = await ecc.generateKeyPair();
+
+    await StorageService.saveECCKeys(
+      publicKey: keyPair.publicKey,
+      privateKey: keyPair.privateKey,
+    );
+
+    // ------------------------------------------------------------
+    // 🔥 3. Genera userId univoco
+    // ------------------------------------------------------------
+    final userId = ecc.generateUserId();
+
+    // ------------------------------------------------------------
+    // 🔥 4. Genera QR personale (contiene la publicKey)
+    // ------------------------------------------------------------
+    final qrData = ecc.generateQrData(
+      firstName: name,
+      lastName: surname,
+      phone: email, // puoi sostituire con telefono se lo aggiungi
+      userId: userId,
+      publicKeyECC: keyPair.publicKey,
+    );
+
+    await StorageService.saveQrData(qrData);
+
+    // ------------------------------------------------------------
+    // 🔥 5. Flag registrazione
+    // ------------------------------------------------------------
     await StorageService.setRegistered(true);
     await StorageService.setHasPassword(true);
 
+    // ------------------------------------------------------------
+    // 🔥 6. Vai alla Home
+    // ------------------------------------------------------------
     if (!mounted) return;
     Navigator.pushReplacementNamed(context, AppRoutes.home);
   }
@@ -88,7 +126,6 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-
             Text(
               l10n.loginDescription,
               style: const TextStyle(
@@ -96,31 +133,22 @@ class _LoginPageState extends State<LoginPage> {
                 fontSize: 16,
               ),
             ),
-
             const SizedBox(height: 30),
-
             _buildField(
               controller: nameController,
               label: l10n.firstNameLabel,
             ),
-
             const SizedBox(height: 12),
-
             _buildField(
               controller: surnameController,
               label: l10n.lastNameLabel,
             ),
-
             const SizedBox(height: 12),
-
             _buildField(
               controller: emailController,
               label: l10n.emailLabel,
             ),
-
             const SizedBox(height: 12),
-
-            // ⭐ PASSWORD CON OCCHIO
             _buildField(
               controller: passwordController,
               label: l10n.passwordLabel,
@@ -131,10 +159,7 @@ class _LoginPageState extends State<LoginPage> {
                 });
               },
             ),
-
             const SizedBox(height: 12),
-
-            // ⭐ CONFERMA PASSWORD CON OCCHIO
             _buildField(
               controller: confirmPasswordController,
               label: l10n.confirmPasswordLabel,
@@ -145,9 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                 });
               },
             ),
-
             const SizedBox(height: 30),
-
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -171,9 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 40),
-
             Center(
               child: TextButton(
                 onPressed: () {
@@ -185,7 +206,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
           ],
         ),
@@ -220,8 +240,6 @@ class _LoginPageState extends State<LoginPage> {
           borderSide: BorderSide(color: Colors.black),
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
-
-        // ⭐ AGGIUNTA: icona occhio
         suffixIcon: onToggleVisibility == null
             ? null
             : IconButton(

@@ -422,8 +422,46 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sandwichSubtitle =>
-      'Puoi inserire più file. Non puoi superare il limite di 5 MB.';
+      'Puoi inserire più file. Non puoi superare il limite di 5 MB. Puoi cambiare la sequenza con drag&drop';
 
   @override
   String get sandwichImportGallery => 'Importa da galleria';
+
+  @override
+  String get recoverPasswordTitle => 'Recupera password';
+
+  @override
+  String get recoverPasswordDescription =>
+      'Se hai dimenticato la password, puoi azzerare l\'app e ripartire da zero. Tutti i dati locali (profilo, chiavi, contatti, QR) verranno eliminati.';
+
+  @override
+  String get recoverPasswordButton => 'Recupera password';
+
+  @override
+  String get resetAppTitle => 'Reset applicazione';
+
+  @override
+  String get resetAppMessage =>
+      'Sei sicuro di voler resettare WinkWink? Tutti i dati locali verranno eliminati e dovrai creare un nuovo profilo.';
+
+  @override
+  String get resetAppButton => 'Resetta app';
+
+  @override
+  String get resetButton => 'Reset';
+
+  @override
+  String get cancelButton => 'Annulla';
+
+  @override
+  String get encryptSelectSecret => 'Seleziona il segreto da cifrare';
+
+  @override
+  String get decrypting => 'Decrittazione in corso...';
+
+  @override
+  String get scanFromGallery => 'Scansiona dalla galleria';
+
+  @override
+  String get scanFromCamera => 'Scansiona dalla fotocamera';
 }

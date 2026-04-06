@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +9,10 @@ import 'package:winkwink/generated/l10n/app_localizations.dart';
 import '../widgets/neon_button.dart';
 import '../widgets/ww_dialogs.dart';
 import '../widgets/winkwink_scaffold.dart';
-import '../services/crypto_service.dart';
+
+import '../services/steganography_service.dart';
+import '../services/storage_service.dart';
+
 import '../providers/color_provider.dart';
 
 class DecryptPage extends StatefulWidget {
@@ -19,13 +23,13 @@ class DecryptPage extends StatefulWidget {
 }
 
 class _DecryptPageState extends State<DecryptPage> {
-  final _crypto = CryptoService();
   final ImagePicker _picker = ImagePicker();
 
   String? _imagePath;
+  Map<String, dynamic>? _payload;
+  Map<String, dynamic>? _secret;
 
-  List<int>? _decryptedBytes;
-  PayloadType? _payloadType;
+  bool _loading = false;
 
   Future<void> _pickImage() async {
     final XFile? img = await _picker.pickImage(source: ImageSource.gallery);
@@ -35,8 +39,8 @@ class _DecryptPageState extends State<DecryptPage> {
     if (img != null) {
       setState(() {
         _imagePath = img.path;
-        _decryptedBytes = null;
-        _payloadType = null;
+        _payload = null;
+        _secret = null;
       });
     }
   }
@@ -53,14 +57,77 @@ class _DecryptPageState extends State<DecryptPage> {
       return;
     }
 
-    try {
-      final result = await _crypto.decrypt(_imagePath!);
+    setState(() => _loading = true);
 
-      if (!mounted) return;
+    try {
+      // 1. Estrai bytes
+      final extractedBytes = await SteganographyService().extractPayload(
+        imagePath: _imagePath!,
+      );
+
+      if (extractedBytes.isEmpty) {
+        throw Exception("Payload vuoto o non trovato");
+      }
+
+      // 2. Bytes → JSON
+      late final Map<String, dynamic> payload;
+
+      try {
+        final jsonString = utf8.decode(extractedBytes);
+        payload = jsonDecode(jsonString);
+      } catch (_) {
+        throw Exception("Payload corrotto o non valido");
+      }
+
+      // 3. Recupera chiavi ECC
+      final eccKeys = await StorageService.getECCKeys();
+      final myPrivateKey = eccKeys["privateKey"];
+      final myPublicKey = eccKeys["publicKey"];
+
+      if (myPrivateKey == null || myPublicKey == null) {
+        throw Exception("Chiavi ECC personali mancanti");
+      }
+
+      // 4. Universal Key
+      final universalKey = await StorageService.getUniversalKey();
+
+      // 5. Verifica destinatari
+      if (!payload.containsKey("recipients")) {
+        throw Exception("Campo recipients mancante");
+      }
+
+      final List recipients = payload["recipients"];
+
+      Map<String, dynamic>? myRecipientEntry;
+
+      for (final r in recipients) {
+        if (r["publicKey"] == myPublicKey) {
+          myRecipientEntry = r;
+          break;
+        }
+      }
+
+      if (myRecipientEntry == null && universalKey == null) {
+        throw Exception("Non sei tra i destinatari");
+      }
+
+      // 6. Shared secret
+      final sharedSecret = universalKey ?? myRecipientEntry!["sharedSecret"];
+
+      if (sharedSecret == null) {
+        throw Exception("Shared secret mancante");
+      }
+
+      // 7. Secret vero
+      if (!payload.containsKey("secret")) {
+        throw Exception("Campo secret mancante");
+      }
+
+      final secret = payload["secret"];
 
       setState(() {
-        _decryptedBytes = result.bytes;
-        _payloadType = result.type;
+        _payload = payload;
+        _secret = secret;
       });
 
       await showInfoDialog(
@@ -76,16 +143,20 @@ class _DecryptPageState extends State<DecryptPage> {
         title: l10n.decryptError,
         message: e.toString(),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
-  Widget _buildDecryptedContent(Color textColor) {
-    if (_decryptedBytes == null || _payloadType == null) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildSecret(Color textColor) {
+    if (_secret == null) return const SizedBox.shrink();
 
-    switch (_payloadType!) {
-      case PayloadType.text:
+    final type = _secret!["type"];
+
+    switch (type) {
+      case "text":
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -93,30 +164,58 @@ class _DecryptPageState extends State<DecryptPage> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            String.fromCharCodes(_decryptedBytes!),
+            _secret!["data"],
             style: TextStyle(fontSize: 16, color: textColor),
           ),
         );
 
-      case PayloadType.image:
-        return Image.memory(
-          Uint8List.fromList(_decryptedBytes!),
-          fit: BoxFit.contain,
+      case "image":
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            base64Decode(_secret!["data"]),
+            fit: BoxFit.contain,
+          ),
         );
 
-      case PayloadType.audio:
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            "Audio decrypted (${_decryptedBytes!.length} bytes)\nPlayback support coming soon.",
-            style: TextStyle(fontSize: 16, color: textColor),
-          ),
+      case "audio":
+        return _buildInfoBox(
+          "Audio (${_secret!["data"].length} bytes)\nPlayback coming soon.",
+          textColor,
+        );
+
+      case "video":
+        return _buildInfoBox(
+          "Video (${_secret!["data"].length} bytes)\nPlayback coming soon.",
+          textColor,
+        );
+
+      case "sandwich":
+        return _buildInfoBox(
+          "Sandwich con ${_secret!["layers"].length} livelli.\nUI coming soon.",
+          textColor,
+        );
+
+      default:
+        return Text(
+          "Tipo sconosciuto: $type",
+          style: TextStyle(color: textColor),
         );
     }
+  }
+
+  Widget _buildInfoBox(String text, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 16, color: textColor),
+      ),
+    );
   }
 
   @override
@@ -131,8 +230,6 @@ class _DecryptPageState extends State<DecryptPage> {
         child: ListView(
           children: [
             const SizedBox(height: 10),
-
-            // 🔥 TITOLO
             Text(
               l10n.decryptTitle,
               textAlign: TextAlign.center,
@@ -149,27 +246,22 @@ class _DecryptPageState extends State<DecryptPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // DESCRIZIONE (FIX: ORA È NERA)
             Text(
               l10n.decryptDescription,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.black, // 👈 FIX APPLICATO
+                color: Colors.black,
                 fontSize: 16,
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // 🔘 BOTTONE SCEGLI IMMAGINE
             NeonButton(
               label: l10n.decryptPickImage,
-              onPressed: _pickImage,
+              onPressed: () {
+                if (!_loading) _pickImage();
+              },
             ),
-
             if (_imagePath != null) ...[
               const SizedBox(height: 16),
               ClipRRect(
@@ -181,16 +273,14 @@ class _DecryptPageState extends State<DecryptPage> {
                 ),
               ),
             ],
-
             const SizedBox(height: 20),
-
-            // 🔘 BOTTONE DECRIPTA
             NeonButton(
-              label: l10n.decryptButton,
-              onPressed: _decrypt,
+              label: _loading ? l10n.decrypting : l10n.decryptButton,
+              onPressed: () {
+                if (!_loading) _decrypt();
+              },
             ),
-
-            if (_decryptedBytes != null) ...[
+            if (_secret != null) ...[
               const SizedBox(height: 30),
               Text(
                 l10n.decryptResult,
@@ -201,7 +291,7 @@ class _DecryptPageState extends State<DecryptPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildDecryptedContent(theme.text),
+              _buildSecret(theme.text),
             ],
           ],
         ),

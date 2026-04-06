@@ -113,7 +113,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginDescription.
   ///
   /// In en, this message translates to:
-  /// **'Enter your details to begin.'**
+  /// **'Enter your details to get started.'**
   String get loginDescription;
 
   /// No description provided for @requiredField.
@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @encryptSelectRecipientsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Select from your contacts who will receive your secret file, follow the instructions'**
+  /// **'Select the contacts you want to send a secret file to, follow the instructions'**
   String get encryptSelectRecipientsTitle;
 
   /// No description provided for @encryptSelectRecipients.
@@ -599,7 +599,7 @@ abstract class AppLocalizations {
   /// No description provided for @encryptVisibleImageTitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose the image visible to everyone'**
+  /// **'Choose the visible image'**
   String get encryptVisibleImageTitle;
 
   /// No description provided for @encryptPickVisibleImage.
@@ -899,7 +899,7 @@ abstract class AppLocalizations {
   /// No description provided for @sandwichSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'You can add multiple files. You cannot exceed the 5 MB limit.'**
+  /// **'You can add multiple files. You cannot exceed the 5 MB limit. You can reorder items with drag & drop.'**
   String get sandwichSubtitle;
 
   /// No description provided for @sandwichImportGallery.
@@ -907,6 +907,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import from gallery'**
   String get sandwichImportGallery;
+
+  /// No description provided for @recoverPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover password'**
+  String get recoverPasswordTitle;
+
+  /// No description provided for @recoverPasswordDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'If you forgot your password, you can reset the app and start from scratch. All local data (profile, keys, contacts, QR) will be deleted.'**
+  String get recoverPasswordDescription;
+
+  /// No description provided for @recoverPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Recover password'**
+  String get recoverPasswordButton;
+
+  /// No description provided for @resetAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset application'**
+  String get resetAppTitle;
+
+  /// No description provided for @resetAppMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset WinkWink? All local data will be deleted and you will need to create a new profile.'**
+  String get resetAppMessage;
+
+  /// No description provided for @resetAppButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset app'**
+  String get resetAppButton;
+
+  /// No description provided for @resetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetButton;
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
+  /// No description provided for @encryptSelectSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the secret to encrypt'**
+  String get encryptSelectSecret;
+
+  /// No description provided for @decrypting.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrypting...'**
+  String get decrypting;
+
+  /// No description provided for @scanFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from gallery'**
+  String get scanFromGallery;
+
+  /// No description provided for @scanFromCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan from camera'**
+  String get scanFromCamera;
 }
 
 class _AppLocalizationsDelegate

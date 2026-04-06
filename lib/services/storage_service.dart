@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -77,7 +78,7 @@ class StorageService {
   }
 
   // ------------------------------------------------------------
-  // 🔥 QR CODE (compatibilità)
+  // 🔥 QR CODE PERSONALE
   // ------------------------------------------------------------
 
   static Future<void> saveQrData(String data) async {
@@ -88,5 +89,62 @@ class StorageService {
   static Future<String?> getQrData() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("qr_data");
+  }
+
+  // ------------------------------------------------------------
+  // 🔥 ECC KEYS (pubblica + privata)
+  // ------------------------------------------------------------
+
+  static Future<void> saveECCKeys({
+    required String publicKey,
+    required String privateKey,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("ecc_public_key", publicKey);
+    await prefs.setString("ecc_private_key", privateKey);
+  }
+
+  static Future<Map<String, String?>> getECCKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      "publicKey": prefs.getString("ecc_public_key"),
+      "privateKey": prefs.getString("ecc_private_key"),
+    };
+  }
+
+  // ------------------------------------------------------------
+  // 🔥 UNIVERSAL KEY (Passepartout)
+  // ------------------------------------------------------------
+
+  static Future<void> saveUniversalKey(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("universal_key", key);
+  }
+
+  static Future<String?> getUniversalKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("universal_key");
+  }
+
+  // ------------------------------------------------------------
+  // 🔥 CONTATTI (lista JSON)
+  // ------------------------------------------------------------
+
+  static const _keyContacts = "contacts_list";
+
+  static Future<void> saveContacts(List<Map<String, dynamic>> contacts) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = jsonEncode(contacts);
+    await prefs.setString(_keyContacts, jsonString);
+  }
+
+  static Future<List<Map<String, dynamic>>> loadContacts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_keyContacts);
+
+    if (jsonString == null) return [];
+
+    final List decoded = jsonDecode(jsonString);
+    return decoded.cast<Map<String, dynamic>>();
   }
 }

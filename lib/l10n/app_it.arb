@@ -147,7 +147,8 @@
   "recoverPassword": "Recupera password",
   "emailAssociated": "Email associata",
   "sendButton": "Invia",
-    "sandwichTitle": "Sandwich",
+
+  "sandwichTitle": "Sandwich",
   "sandwichAddImage": "Aggiungi Foto",
   "sandwichAddCamera": "Aggiungi Foto da Fotocamera",
   "sandwichAddText": "Aggiungi Testo",
@@ -163,6 +164,21 @@
   "sandwichItemAudio": "Audio",
   "sandwichProgress": "{current} MB / {max} MB",
   "encryptHideSandwich": "Sandwich",
-  "sandwichSubtitle": "Puoi inserire più file. Non puoi superare il limite di 5 MB. Puoi cambiare la sequenza con drag&drop".,
-  "sandwichImportGallery": "Importa da galleria"
+  "sandwichSubtitle": "Puoi inserire più file. Non puoi superare il limite di 5 MB. Puoi cambiare la sequenza con drag&drop",
+  "sandwichImportGallery": "Importa da galleria",
+
+  "recoverPasswordTitle": "Recupera password",
+  "recoverPasswordDescription": "Se hai dimenticato la password, puoi azzerare l'app e ripartire da zero. Tutti i dati locali (profilo, chiavi, contatti, QR) verranno eliminati.",
+  "recoverPasswordButton": "Recupera password",
+
+  "resetAppTitle": "Reset applicazione",
+  "resetAppMessage": "Sei sicuro di voler resettare WinkWink? Tutti i dati locali verranno eliminati e dovrai creare un nuovo profilo.",
+  "resetAppButton": "Resetta app",
+  "resetButton": "Reset",
+  "cancelButton": "Annulla",
+
+  "encryptSelectSecret": "Seleziona il segreto da cifrare",
+  "decrypting": "Decrittazione in corso...",
+  "scanFromGallery": "Scansiona dalla galleria",
+  "scanFromCamera": "Scansiona dalla fotocamera"
 }

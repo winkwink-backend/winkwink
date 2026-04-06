@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -9,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../widgets/mini_neon_button.dart';
 import '../services/storage_service.dart';
 import '../widgets/winkwink_scaffold.dart';
+import '../providers/color_provider.dart';
 
 class SendQrPage extends StatefulWidget {
   const SendQrPage({super.key});
@@ -97,7 +99,7 @@ class _SendQrPageState extends State<SendQrPage> {
         [
           XFile(
             file.path,
-            mimeType: 'image/png', // ⭐ WhatsApp fix
+            mimeType: 'image/png',
           )
         ],
         text: l10n.shareQrMessage,
@@ -111,37 +113,47 @@ class _SendQrPageState extends State<SendQrPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(
       showColorSelector: false,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ⭐ FRECCIA BACK SEMPRE NERA
+          // 🔙 BACK BUTTON
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
               iconSize: 36,
               icon: const Icon(Icons.keyboard_double_arrow_left),
-              color: Colors.black,
+              color: theme.text,
               onPressed: () => Navigator.pop(context),
             ),
           ),
 
           const SizedBox(height: 10),
 
+          // 🔥 TITOLO NEON
           Text(
             l10n.sendQrTitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: theme.text,
+              shadows: const [
+                Shadow(
+                  blurRadius: 4,
+                  color: Colors.black,
+                  offset: Offset(1, 1),
+                ),
+              ],
             ),
           ),
 
           const SizedBox(height: 10),
 
+          // 🔥 DESCRIZIONE
           Text(
             l10n.sendQrDescription,
             textAlign: TextAlign.center,
@@ -153,33 +165,41 @@ class _SendQrPageState extends State<SendQrPage> {
 
           const SizedBox(height: 30),
 
+          // 🔥 QR CODE
           Center(
-            child: QrImageView(
-              data: _qrData,
-              version: QrVersions.auto,
-              size: 220,
-              backgroundColor: Colors.white,
-              eyeStyle: const QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: Colors.black,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [
+                  BoxShadow(
+                    blurRadius: 8,
+                    color: Colors.black26,
+                    offset: Offset(2, 2),
+                  ),
+                ],
               ),
-              dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: Colors.black,
+              child: QrImageView(
+                data: _qrData,
+                version: QrVersions.auto,
+                size: 220,
+                backgroundColor: Colors.white,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: Colors.black,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Colors.black,
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          Text(
-            '${l10n.internalQrData}\n$_qrData',
-            style: const TextStyle(fontSize: 12),
-          ),
-
           const SizedBox(height: 40),
 
-          // ⭐ MiniNeonButton come tutte le altre pagine
+          // 🔥 PULSANTE SHARE
           MiniNeonButton(
             label: l10n.forwardButton,
             icon: Icons.share,

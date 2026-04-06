@@ -15,7 +15,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginTitle => 'Welcome to WinkWink';
 
   @override
-  String get loginDescription => 'Enter your details to begin.';
+  String get loginDescription => 'Enter your details to get started.';
 
   @override
   String get requiredField => 'Required field';
@@ -255,7 +255,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get encryptSelectRecipientsTitle =>
-      'Select from your contacts who will receive your secret file, follow the instructions';
+      'Select the contacts you want to send a secret file to, follow the instructions';
 
   @override
   String get encryptSelectRecipients => 'Select recipients';
@@ -264,7 +264,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get encryptContactsButton => 'Contacts';
 
   @override
-  String get encryptVisibleImageTitle => 'Choose the image visible to everyone';
+  String get encryptVisibleImageTitle => 'Choose the visible image';
 
   @override
   String get encryptPickVisibleImage => 'Image';
@@ -419,8 +419,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sandwichSubtitle =>
-      'You can add multiple files. You cannot exceed the 5 MB limit.';
+      'You can add multiple files. You cannot exceed the 5 MB limit. You can reorder items with drag & drop.';
 
   @override
   String get sandwichImportGallery => 'Import from gallery';
+
+  @override
+  String get recoverPasswordTitle => 'Recover password';
+
+  @override
+  String get recoverPasswordDescription =>
+      'If you forgot your password, you can reset the app and start from scratch. All local data (profile, keys, contacts, QR) will be deleted.';
+
+  @override
+  String get recoverPasswordButton => 'Recover password';
+
+  @override
+  String get resetAppTitle => 'Reset application';
+
+  @override
+  String get resetAppMessage =>
+      'Are you sure you want to reset WinkWink? All local data will be deleted and you will need to create a new profile.';
+
+  @override
+  String get resetAppButton => 'Reset app';
+
+  @override
+  String get resetButton => 'Reset';
+
+  @override
+  String get cancelButton => 'Cancel';
+
+  @override
+  String get encryptSelectSecret => 'Select the secret to encrypt';
+
+  @override
+  String get decrypting => 'Decrypting...';
+
+  @override
+  String get scanFromGallery => 'Scan from gallery';
+
+  @override
+  String get scanFromCamera => 'Scan from camera';
 }

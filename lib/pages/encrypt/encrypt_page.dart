@@ -1,15 +1,21 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
 import '../../widgets/winkwink_scaffold.dart';
 import '../../providers/color_provider.dart';
 import '../../widgets/mini_neon_button.dart';
+
+import '../../services/storage_service.dart';
+import '../../services/ecc_service.dart';
+import '../../services/steganography_service.dart';
 
 class EncryptPage extends StatefulWidget {
   const EncryptPage({super.key});
@@ -93,6 +99,110 @@ class _EncryptPageState extends State<EncryptPage> {
     });
   }
 
+  // ------------------------------------------------------------
+  // 🔥 FUNZIONE CRIPTA COMPLETA
+  // ------------------------------------------------------------
+  Future<void> _encryptAndShare() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (visibleImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.encryptPickVisibleImage)),
+      );
+      return;
+    }
+
+    if (selectedSecret == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.encryptSelectSecret)),
+      );
+      return;
+    }
+
+    if (selectedContacts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.encryptSelectRecipientsTitle)),
+      );
+      return;
+    }
+
+    try {
+      // ------------------------------------------------------------
+      // 🔥 1. Recupera chiavi ECC personali
+      // ------------------------------------------------------------
+      final eccKeys = await StorageService.getECCKeys();
+      final myPrivateKey = eccKeys["privateKey"];
+      final myPublicKey = eccKeys["publicKey"];
+
+      if (myPrivateKey == null || myPublicKey == null) {
+        throw Exception("Chiavi ECC non trovate");
+      }
+
+      // ------------------------------------------------------------
+      // 🔥 2. Recupera chiave universale (Passepartout)
+      // ------------------------------------------------------------
+      final universalKey = await StorageService.getUniversalKey();
+
+      // ------------------------------------------------------------
+      // 🔥 3. Calcola shared secrets per ogni destinatario
+      // ------------------------------------------------------------
+      final ecc = ECCService();
+      final List<Map<String, dynamic>> recipients = [];
+
+      for (final c in selectedContacts) {
+        final contactPublicKey = c["publicKey"];
+
+        if (contactPublicKey == null) continue;
+
+        final sharedSecret = universalKey != null
+            ? universalKey // modalità Passepartout
+            : await ecc.computeSharedSecret(
+                privateKey: myPrivateKey,
+                publicKey: contactPublicKey,
+              );
+
+        recipients.add({
+          "name": c["name"],
+          "publicKey": contactPublicKey,
+          "sharedSecret": sharedSecret,
+        });
+      }
+
+      // ------------------------------------------------------------
+      // 🔥 4. Costruisci payload JSON
+      // ------------------------------------------------------------
+      final payload = {
+        "senderPublicKey": myPublicKey,
+        "recipients": recipients,
+        "secret": selectedSecret,
+        "timestamp": DateTime.now().millisecondsSinceEpoch,
+        "mode": universalKey != null ? "passepartout" : "personal",
+      };
+
+      final payloadBytes = utf8.encode(jsonEncode(payload));
+
+      // ------------------------------------------------------------
+      // 🔥 5. Steganografia
+      // ------------------------------------------------------------
+      final stegoFile = await SteganographyService().embedPayload(
+        imagePath: visibleImage!.path,
+        payload: payloadBytes,
+      );
+
+      // ------------------------------------------------------------
+      // 🔥 6. Share sheet
+      // ------------------------------------------------------------
+      await Share.shareXFiles([XFile(stegoFile.path)]);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Errore: $e")),
+      );
+    }
+  }
+
+  // ------------------------------------------------------------
+  // 🔥 BUILD
+  // ------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -343,12 +453,12 @@ class _EncryptPageState extends State<EncryptPage> {
                   ),
                 ),
                 const SizedBox(height: 30),
+
+                // 🔥 PULSANTE CRIPTA COMPLETO
                 MiniNeonButton(
                   label: l10n.encryptButton,
                   icon: Icons.lock,
-                  onPressed: () {
-                    // 🔥 Steganografia + share sheet
-                  },
+                  onPressed: _encryptAndShare,
                 ),
               ],
             ],

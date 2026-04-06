@@ -2,7 +2,7 @@
   "appTitle": "WinkWink",
 
   "loginTitle": "Welcome to WinkWink",
-  "loginDescription": "Enter your details to begin.",
+  "loginDescription": "Enter your details to get started.",
   "requiredField": "Required field",
   "loginIdGeneratedTitle": "ID Generated",
   "loginIdGeneratedMessage": "Your unique ID has been securely created.",
@@ -100,11 +100,11 @@
   "changeSecret": "Do you want to change the secret?",
 
   "encryptSelectRecipientsSubtitle": "Choose who you want to share your secret files with",
-  "encryptSelectRecipientsTitle": "Select from your contacts who will receive your secret file, follow the instructions",
+  "encryptSelectRecipientsTitle": "Select the contacts you want to send a secret file to, follow the instructions",
   "encryptSelectRecipients": "Select recipients",
 
   "encryptContactsButton": "Contacts",
-  "encryptVisibleImageTitle": "Choose the image visible to everyone",
+  "encryptVisibleImageTitle": "Choose the visible image",
   "encryptPickVisibleImage": "Image",
   "encryptWhatToHide": "What do you want to hide?",
   "encryptHideImage": "Hide image",
@@ -147,7 +147,8 @@
   "recoverPassword": "Recover password",
   "emailAssociated": "Associated email",
   "sendButton": "Send",
-    "sandwichTitle": "Sandwich",
+
+  "sandwichTitle": "Sandwich",
   "sandwichAddImage": "Add Photo",
   "sandwichAddCamera": "Add Camera Photo",
   "sandwichAddText": "Add Text",
@@ -163,6 +164,21 @@
   "sandwichItemAudio": "Audio",
   "sandwichProgress": "{current} MB / {max} MB",
   "encryptHideSandwich": "Sandwich",
-  "sandwichSubtitle": "You can insert multiple files. You cannot exceed the 5 MB limit. You can change the sequence with drag & drop.",
-  "sandwichImportGallery": "Import from gallery"
+  "sandwichSubtitle": "You can add multiple files. You cannot exceed the 5 MB limit. You can reorder items with drag & drop.",
+  "sandwichImportGallery": "Import from gallery",
+
+  "recoverPasswordTitle": "Recover password",
+  "recoverPasswordDescription": "If you forgot your password, you can reset the app and start from scratch. All local data (profile, keys, contacts, QR) will be deleted.",
+  "recoverPasswordButton": "Recover password",
+
+  "resetAppTitle": "Reset application",
+  "resetAppMessage": "Are you sure you want to reset WinkWink? All local data will be deleted and you will need to create a new profile.",
+  "resetAppButton": "Reset app",
+  "resetButton": "Reset",
+  "cancelButton": "Cancel",
+
+  "encryptSelectSecret": "Select the secret to encrypt",
+  "decrypting": "Decrypting...",
+  "scanFromGallery": "Scan from gallery",
+  "scanFromCamera": "Scan from camera"
 }
