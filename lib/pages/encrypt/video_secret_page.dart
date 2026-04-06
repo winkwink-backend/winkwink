@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,7 +20,9 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:video_compress/video_compress.dart';
 
 class VideoSecretPage extends StatefulWidget {
-  const VideoSecretPage({super.key});
+  final String mode;
+
+  const VideoSecretPage({super.key, this.mode = "encrypt"});
 
   @override
   State<VideoSecretPage> createState() => _VideoSecretPageState();
@@ -29,34 +31,74 @@ class VideoSecretPage extends StatefulWidget {
 class _VideoSecretPageState extends State<VideoSecretPage> {
   File? recordedVideo;
 
-  late final Player player;
-  late final VideoController videoController;
+  late Player player;
+  late VideoController videoController;
 
   bool playerInitialized = false;
-
-  final ImagePicker _picker = ImagePicker();
-
-  // 🔥 Stato compressione
   bool isCompressing = false;
   double compressProgress = 0.0;
+
+  final ImagePicker _picker = ImagePicker();
+  String mode = "encrypt";
+
+  bool compressionRunning = false;
+
+  // ⭐ Subscription corretta del plugin video_compress
+  Subscription? _compressSub;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args["mode"] == "sandwich") {
+      mode = "sandwich";
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    player = Player();
-    videoController = VideoController(player);
+    _createNewPlayer();
 
-    // Listener avanzamento compressione (versione corretta)
-    VideoCompress.compressProgress$.subscribe((progress) {
+    // ⭐ subscribe() — NON listen()
+    _compressSub = VideoCompress.compressProgress$.subscribe((progress) {
       if (mounted) {
         setState(() => compressProgress = progress);
       }
     });
   }
 
-  /// 🎥 REGISTRA NUOVO VIDEO
+  void _createNewPlayer() {
+    player = Player();
+    videoController = VideoController(player);
+    playerInitialized = false;
+  }
+
+  Future<void> resetState() async {
+    try {
+      await player.stop();
+    } catch (_) {}
+
+    try {
+      await player.dispose();
+    } catch (_) {}
+
+    VideoCompress.cancelCompression();
+    VideoCompress.deleteAllCache();
+
+    setState(() {
+      recordedVideo = null;
+      playerInitialized = false;
+      isCompressing = false;
+      compressProgress = 0.0;
+      compressionRunning = false;
+    });
+
+    _createNewPlayer();
+  }
+
   Future<void> openCamera() async {
-    await player.stop();
+    await resetState();
 
     final result = await Navigator.push(
       context,
@@ -72,8 +114,9 @@ class _VideoSecretPageState extends State<VideoSecretPage> {
     }
   }
 
-  /// 📥 IMPORTA DALLA GALLERIA + 🔥 COMPRESSIONE AUTOMATICA + 🚫 LIMITE 100MB
   Future<void> importFromGallery() async {
+    if (compressionRunning) return;
+
     final l10n = AppLocalizations.of(context)!;
 
     try {
@@ -84,32 +127,32 @@ class _VideoSecretPageState extends State<VideoSecretPage> {
 
       if (video == null) return;
 
-      // 🚫 BLOCCO FILE > 100MB
       final fileSize = await File(video.path).length();
       if (fileSize > 100 * 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.videoTooLarge),
-          ),
+          SnackBar(content: Text(l10n.videoTooLarge)),
         );
         return;
       }
 
-      await player.stop();
+      await resetState();
 
-      // 🔥 COMPRESSIONE AUTOMATICA
       setState(() {
         isCompressing = true;
         compressProgress = 0.0;
+        compressionRunning = true;
       });
 
       final compressed = await VideoCompress.compressVideo(
         video.path,
-        quality: VideoQuality.MediumQuality, // 720p
+        quality: VideoQuality.MediumQuality,
         deleteOrigin: false,
       );
 
-      setState(() => isCompressing = false);
+      setState(() {
+        isCompressing = false;
+        compressionRunning = false;
+      });
 
       if (compressed != null && compressed.file != null) {
         recordedVideo = compressed.file;
@@ -120,11 +163,13 @@ class _VideoSecretPageState extends State<VideoSecretPage> {
       await loadVideo();
     } catch (e) {
       debugPrint("❌ Errore selezione galleria: $e");
-      setState(() => isCompressing = false);
+      setState(() {
+        isCompressing = false;
+        compressionRunning = false;
+      });
     }
   }
 
-  /// 🎞 CARICA VIDEO IN MEDIAKIT
   Future<void> loadVideo() async {
     if (recordedVideo == null) return;
 
@@ -138,22 +183,19 @@ class _VideoSecretPageState extends State<VideoSecretPage> {
 
       setState(() => playerInitialized = true);
     } catch (e) {
-      debugPrint("❌ Errore caricamento video MediaKit: $e");
+      debugPrint("❌ Errore MediaKit: $e");
+      resetState();
     }
   }
 
   void deleteVideo() {
-    player.stop();
-    setState(() {
-      recordedVideo = null;
-      playerInitialized = false;
-    });
+    resetState();
   }
 
   @override
   void dispose() {
-    player.dispose();
-    VideoCompress.cancelCompression();
+    _compressSub?.unsubscribe(); // ⭐ FIX FINALE
+    resetState();
     super.dispose();
   }
 
@@ -164,111 +206,113 @@ class _VideoSecretPageState extends State<VideoSecretPage> {
 
     return WinkWinkScaffold(
       showColorSelector: false,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+      child: Stack(
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              iconSize: 36,
-              icon: const Icon(Icons.keyboard_double_arrow_left),
-              color: Colors.black,
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            l10n.videoSecretTitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            "Massimo 15 secondi",
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          MiniNeonButton(
-            label: "Registra Video",
-            icon: Icons.videocam,
-            onPressed: openCamera,
-          ),
-
-          const SizedBox(height: 10),
-
-          MiniNeonButton(
-            label: "Carica dalla Galleria",
-            icon: Icons.video_library,
-            onPressed: importFromGallery,
-          ),
-
-          // 🔥 UI compressione
-          if (isCompressing) ...[
-            const SizedBox(height: 20),
-            const Text(
-              "Compressione in corso...",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            LinearProgressIndicator(
-              value: compressProgress / 100,
-              minHeight: 8,
-            ),
-            const SizedBox(height: 20),
-          ],
-
-          if (recordedVideo != null && playerInitialized) ...[
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 400,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: SizedBox(
-                    width: 300,
-                    height: 600,
-                    child: Video(controller: videoController),
-                  ),
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  iconSize: 36,
+                  icon: const Icon(Icons.keyboard_double_arrow_left),
+                  color: Colors.black,
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: IconButton(
-                iconSize: 32,
-                color: Colors.red.shade700,
-                icon: const Icon(Icons.delete),
-                onPressed: deleteVideo,
+              const SizedBox(height: 10),
+              Text(
+                l10n.videoSecretTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Massimo 15 secondi",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 30),
+              MiniNeonButton(
+                label: "Registra Video",
+                icon: Icons.videocam,
+                onPressed: openCamera,
+              ),
+              const SizedBox(height: 10),
+              MiniNeonButton(
+                label: "Carica dalla Galleria",
+                icon: Icons.video_library,
+                onPressed: importFromGallery,
+              ),
+              if (isCompressing) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  "Compressione in corso...",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                LinearProgressIndicator(
+                  value: compressProgress / 100,
+                  minHeight: 8,
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (recordedVideo != null && playerInitialized) ...[
+                const SizedBox(height: 30),
+                SizedBox(
+                  height: 400,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: SizedBox(
+                        width: 300,
+                        height: 600,
+                        child: Video(controller: videoController),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Center(
+                  child: IconButton(
+                    iconSize: 32,
+                    color: Colors.red.shade700,
+                    icon: const Icon(Icons.delete),
+                    onPressed: deleteVideo,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                MiniNeonButton(
+                  label: l10n.okButton,
+                  icon: Icons.check,
+                  onPressed: () {
+                    if (recordedVideo == null) return;
+
+                    Navigator.pop(context, {
+                      "type": "video",
+                      "payload": recordedVideo,
+                    });
+                  },
+                ),
+              ],
+            ],
+          ),
+          if (isCompressing)
+            Container(
+              color: Colors.black.withOpacity(0.4),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
               ),
             ),
-            const SizedBox(height: 20),
-            MiniNeonButton(
-              label: l10n.okButton,
-              icon: Icons.check,
-              onPressed: () {
-                Navigator.pop(context, {
-                  "type": "video",
-                  "file": recordedVideo,
-                });
-              },
-            ),
-          ],
         ],
       ),
     );

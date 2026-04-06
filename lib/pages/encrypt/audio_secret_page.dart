@@ -15,7 +15,9 @@ import '../../providers/color_provider.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
 class AudioSecretPage extends StatefulWidget {
-  const AudioSecretPage({super.key});
+  final String mode; // encrypt o sandwich
+
+  const AudioSecretPage({super.key, this.mode = "encrypt"});
 
   @override
   State<AudioSecretPage> createState() => _AudioSecretPageState();
@@ -37,6 +39,17 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
   List<double> bars = List.generate(12, (_) => 5);
 
+  String mode = "encrypt";
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args["mode"] == "sandwich") {
+      mode = "sandwich";
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -44,12 +57,44 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
     player.openPlayer();
   }
 
-  @override
-  void dispose() {
-    recorder.closeRecorder();
-    player.closePlayer();
+  // ⭐ RESET UNIVERSALE (player + recorder + timer + waveform)
+  Future<void> resetState() async {
+    try {
+      await recorder.stopRecorder();
+    } catch (_) {}
+
+    try {
+      await player.stopPlayer();
+    } catch (_) {}
+
+    try {
+      await recorder.closeRecorder();
+    } catch (_) {}
+
+    try {
+      await player.closePlayer();
+    } catch (_) {}
+
     _timer?.cancel();
     _waveTimer?.cancel();
+
+    setState(() {
+      isRecording = false;
+      isPlaying = false;
+      recordedFile = null;
+      recordedDuration = Duration.zero;
+      playPosition = Duration.zero;
+      bars = List.generate(12, (_) => 5);
+    });
+
+    // Ricrea player/recorder per sicurezza
+    await recorder.openRecorder();
+    await player.openPlayer();
+  }
+
+  @override
+  void dispose() {
+    resetState();
     super.dispose();
   }
 
@@ -64,7 +109,7 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
     return status.isGranted;
   }
 
-  // 🎤 AVVIO REGISTRAZIONE (WAV PCM)
+  // 🎤 AVVIO REGISTRAZIONE
   Future<void> startRecording() async {
     bool ok = await ensureMicPermission();
     if (!ok) {
@@ -80,7 +125,7 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
     await recorder.startRecorder(
       toFile: path,
-      codec: Codec.pcm16WAV, // WAV PCM = boost possibile
+      codec: Codec.pcm16WAV,
       sampleRate: 44100,
       numChannels: 1,
     );
@@ -108,12 +153,13 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
   // 🛑 STOP REGISTRAZIONE
   Future<void> stopRecording() async {
-    await recorder.stopRecorder();
+    try {
+      await recorder.stopRecorder();
+    } catch (_) {}
 
     _timer?.cancel();
     _waveTimer?.cancel();
 
-    // BOOST VOLUME SOFTWARE
     await _boostVolumeWav();
 
     setState(() {
@@ -127,7 +173,6 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
     final bytes = await recordedFile!.readAsBytes();
 
-    // WAV header = 44 bytes → i campioni iniziano dopo
     final pcm = bytes.sublist(44).buffer.asInt16List();
 
     const double gain = 3.0;
@@ -136,7 +181,6 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
       pcm[i] = (pcm[i] * gain).clamp(-32768, 32767).toInt();
     }
 
-    // riscrivi WAV: header + PCM amplificato
     final newBytes = Uint8List.fromList([
       ...bytes.sublist(0, 44),
       ...pcm.buffer.asUint8List(),
@@ -167,6 +211,7 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
     });
 
     player.onProgress!.listen((event) {
+      if (!mounted) return;
       setState(() {
         playPosition = event.position;
       });
@@ -175,7 +220,10 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
   // ⏹ STOP RIPRODUZIONE
   Future<void> stopPlayback() async {
-    await player.stopPlayer();
+    try {
+      await player.stopPlayer();
+    } catch (_) {}
+
     setState(() {
       isPlaying = false;
       playPosition = Duration.zero;
@@ -331,7 +379,7 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
               onPressed: () {
                 Navigator.pop(context, {
                   "type": "audio",
-                  "file": recordedFile,
+                  "payload": recordedFile,
                 });
               },
             ),

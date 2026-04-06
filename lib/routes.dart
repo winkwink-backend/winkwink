@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// 👉 PAGINE PRINCIPALI
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'pages/send_qr_page.dart';
@@ -16,14 +17,18 @@ import 'pages/startup_page.dart';
 // 👉 CONTATTI PER ENCRYPT
 import 'pages/contacts_page_encrypt.dart';
 
-// 👉 NUOVE PAGINE STEP 3
+// 👉 PAGINE STEP 3 (CONTENUTI DA NASCONDERE)
 import 'pages/encrypt/hide_image_secret_page.dart';
 import 'pages/encrypt/text_secret_page.dart';
 import 'pages/encrypt/audio_secret_page.dart';
 import 'pages/encrypt/video_secret_page.dart';
-import 'pages/encrypt/camera_secret_page.dart'; // ⭐ MANCAVA!
+import 'pages/encrypt/camera_secret_page.dart';
+
+// ⭐ NUOVA PAGINA SANDWICH
+import 'pages/encrypt/sandwich_secret_page.dart';
 
 class AppRoutes {
+  // 👉 ROTTE PRINCIPALI
   static const String startup = '/startup';
   static const String login = '/login';
   static const String home = '/home';
@@ -38,14 +43,18 @@ class AppRoutes {
   static const String faq = '/faq';
   static const String passwordGate = '/password-gate';
 
-  // 👉 ROTTE STEP 3
+  // 👉 ROTTE STEP 3 (CONTENUTI)
   static const String hideImageSecret = '/hide_image_secret';
   static const String textSecret = '/text_secret';
   static const String audioSecret = '/audio_secret';
   static const String videoSecret = '/video_secret';
-  static const String cameraSecret = '/camera_secret'; // ⭐ AGGIUNTA!
+  static const String cameraSecret = '/camera_secret';
+
+  // ⭐ NUOVA ROTTA SANDWICH
+  static const String sandwichSecret = '/sandwich_secret';
 
   static Map<String, WidgetBuilder> routes = {
+    // 👉 PRINCIPALI
     startup: (_) => const StartupPage(),
     login: (_) => const LoginPage(),
     home: (_) => const HomePage(),
@@ -63,11 +72,14 @@ class AppRoutes {
     faq: (_) => const FaqPage(),
     passwordGate: (_) => const PasswordGatePage(),
 
-    // 👉 STEP 3 — CORRETTI
+    // 👉 STEP 3 — CONTENUTI
     hideImageSecret: (_) => const HideImageSecretPage(),
     textSecret: (_) => const TextSecretPage(),
     audioSecret: (_) => const AudioSecretPage(),
     videoSecret: (_) => const VideoSecretPage(),
-    cameraSecret: (_) => const CameraSecretPage(), // ⭐ FINALMENTE QUI
+    cameraSecret: (_) => const CameraSecretPage(),
+
+    // ⭐ SANDWICH
+    sandwichSecret: (_) => const SandwichSecretPage(),
   };
 }

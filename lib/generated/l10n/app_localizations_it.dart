@@ -369,4 +369,61 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sendButton => 'Invia';
+
+  @override
+  String get sandwichTitle => 'Sandwich';
+
+  @override
+  String get sandwichAddImage => 'Aggiungi Foto';
+
+  @override
+  String get sandwichAddCamera => 'Aggiungi Foto da Fotocamera';
+
+  @override
+  String get sandwichAddText => 'Aggiungi Testo';
+
+  @override
+  String get sandwichAddAudio => 'Aggiungi Audio';
+
+  @override
+  String get sandwichConfirm => 'Conferma Sandwich';
+
+  @override
+  String get sandwichLimitExceeded => 'Hai superato il limite massimo di 5 MB.';
+
+  @override
+  String get sandwichInsertText => 'Inserisci testo';
+
+  @override
+  String get sandwichCancel => 'Annulla';
+
+  @override
+  String get sandwichOk => 'OK';
+
+  @override
+  String get sandwichItemImage => 'Immagine';
+
+  @override
+  String get sandwichItemCamera => 'Fotocamera';
+
+  @override
+  String get sandwichItemText => 'Testo';
+
+  @override
+  String get sandwichItemAudio => 'Audio';
+
+  @override
+  String sandwichProgress(Object current, Object max) {
+    return '$current MB / $max MB';
+  }
+
+  @override
+  String get encryptHideSandwich => 'Sandwich';
+
+  @override
+  String get sandwichSubtitle =>
+      'Puoi inserire più file. Non puoi superare il limite di 5 MB.';
+
+  @override
+  String get sandwichImportGallery => 'Importa da galleria';
 }

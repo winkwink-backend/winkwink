@@ -22,11 +22,8 @@ class _EncryptPageState extends State<EncryptPage> {
   List<Map<String, String>> selectedContacts = [];
   final ImagePicker _picker = ImagePicker();
   File? visibleImage;
-
   Map<String, dynamic>? selectedSecret;
-
   final ScrollController _scrollController = ScrollController();
-
   bool showSecretReadyBanner = false;
 
   // ⭐ Compressione intelligente usando il pacchetto "image"
@@ -40,7 +37,6 @@ class _EncryptPageState extends State<EncryptPage> {
 
     final Uint8List bytes = await file.readAsBytes();
     final img.Image? decoded = img.decodeImage(bytes);
-
     if (decoded == null) return file;
 
     final img.Image resized = img.copyResize(
@@ -164,6 +160,7 @@ class _EncryptPageState extends State<EncryptPage> {
               final result = await Navigator.pushNamed(
                 context,
                 "/contacts_encrypt",
+                arguments: {"mode": "encrypt"},
               );
               if (result is List<Map<String, String>>) {
                 setState(() {
@@ -197,6 +194,7 @@ class _EncryptPageState extends State<EncryptPage> {
 
             if (visibleImage != null) ...[
               const SizedBox(height: 20),
+
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -208,7 +206,9 @@ class _EncryptPageState extends State<EncryptPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 30),
+
               Text(
                 l10n.encryptWhatToHide,
                 textAlign: TextAlign.center,
@@ -218,7 +218,10 @@ class _EncryptPageState extends State<EncryptPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // ⭐ SE NON È STATO SCELTO ANCORA UN SEGRETO
               if (selectedSecret == null) ...[
                 MiniNeonButton(
                   label: l10n.encryptHideImage,
@@ -227,6 +230,7 @@ class _EncryptPageState extends State<EncryptPage> {
                     final result = await Navigator.pushNamed(
                       context,
                       "/hide_image_secret",
+                      arguments: {"mode": "encrypt"},
                     );
                     if (result != null)
                       _onSecretSelected(result as Map<String, dynamic>);
@@ -239,6 +243,7 @@ class _EncryptPageState extends State<EncryptPage> {
                     final result = await Navigator.pushNamed(
                       context,
                       "/text_secret",
+                      arguments: {"mode": "encrypt"},
                     );
                     if (result != null)
                       _onSecretSelected(result as Map<String, dynamic>);
@@ -251,6 +256,7 @@ class _EncryptPageState extends State<EncryptPage> {
                     final result = await Navigator.pushNamed(
                       context,
                       "/camera_secret",
+                      arguments: {"mode": "encrypt"},
                     );
                     if (result != null)
                       _onSecretSelected(result as Map<String, dynamic>);
@@ -263,6 +269,7 @@ class _EncryptPageState extends State<EncryptPage> {
                     final result = await Navigator.pushNamed(
                       context,
                       "/audio_secret",
+                      arguments: {"mode": "encrypt"},
                     );
                     if (result != null)
                       _onSecretSelected(result as Map<String, dynamic>);
@@ -275,12 +282,28 @@ class _EncryptPageState extends State<EncryptPage> {
                     final result = await Navigator.pushNamed(
                       context,
                       "/video_secret",
+                      arguments: {"mode": "encrypt"},
+                    );
+                    if (result != null)
+                      _onSecretSelected(result as Map<String, dynamic>);
+                  },
+                ),
+                MiniNeonButton(
+                  label: l10n.encryptHideSandwich,
+                  icon: Icons.layers,
+                  onPressed: () async {
+                    final result = await Navigator.pushNamed(
+                      context,
+                      "/sandwich_secret",
+                      arguments: {"mode": "encrypt"},
                     );
                     if (result != null)
                       _onSecretSelected(result as Map<String, dynamic>);
                   },
                 ),
               ],
+
+              // ⭐ SE IL SEGRETO È GIÀ STATO SCELTO
               if (selectedSecret != null) ...[
                 const SizedBox(height: 20),
                 Center(
@@ -319,10 +342,7 @@ class _EncryptPageState extends State<EncryptPage> {
                     ),
                   ),
                 ),
-
-                // ⭐ MOSTRA "CRIPTA ORA" SOLO QUANDO IL SEGRETO È SCELTO
                 const SizedBox(height: 30),
-
                 MiniNeonButton(
                   label: l10n.encryptButton,
                   icon: Icons.lock,

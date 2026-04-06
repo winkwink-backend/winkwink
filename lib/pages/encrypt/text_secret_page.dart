@@ -7,7 +7,9 @@ import '../../providers/color_provider.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
 class TextSecretPage extends StatefulWidget {
-  const TextSecretPage({super.key});
+  final String mode; // ⭐ encrypt o sandwich
+
+  const TextSecretPage({super.key, this.mode = "encrypt"});
 
   @override
   State<TextSecretPage> createState() => _TextSecretPageState();
@@ -15,6 +17,17 @@ class TextSecretPage extends StatefulWidget {
 
 class _TextSecretPageState extends State<TextSecretPage> {
   final TextEditingController _controller = TextEditingController();
+
+  String mode = "encrypt"; // ⭐ modalità attuale
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args["mode"] == "sandwich") {
+      mode = "sandwich";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +45,7 @@ class _TextSecretPageState extends State<TextSecretPage> {
             child: IconButton(
               iconSize: 36,
               icon: const Icon(Icons.keyboard_double_arrow_left),
-              color: Colors.black, // ← sempre nera
+              color: Colors.black,
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -85,13 +98,13 @@ class _TextSecretPageState extends State<TextSecretPage> {
               minLines: 8,
               style: const TextStyle(
                 fontSize: 16,
-                color: Colors.black, // ✔ TESTO NERO
+                color: Colors.black,
               ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: "Scrivi qui il tuo messaggio segreto...",
                 hintStyle: TextStyle(
-                  color: Colors.grey.shade700, // ✔ HINT SCURO
+                  color: Colors.grey.shade700,
                 ),
               ),
             ),
@@ -104,11 +117,12 @@ class _TextSecretPageState extends State<TextSecretPage> {
             label: l10n.okButton,
             icon: Icons.check,
             onPressed: () {
-              if (_controller.text.trim().isEmpty) return;
+              final text = _controller.text.trim();
+              if (text.isEmpty) return;
 
               Navigator.pop(context, {
                 "type": "text",
-                "text": _controller.text.trim(),
+                "payload": text, // ⭐ compatibile con Sandwich
               });
             },
           ),

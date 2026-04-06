@@ -366,4 +366,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendButton => 'Send';
+
+  @override
+  String get sandwichTitle => 'Sandwich';
+
+  @override
+  String get sandwichAddImage => 'Add Photo';
+
+  @override
+  String get sandwichAddCamera => 'Add Camera Photo';
+
+  @override
+  String get sandwichAddText => 'Add Text';
+
+  @override
+  String get sandwichAddAudio => 'Add Audio';
+
+  @override
+  String get sandwichConfirm => 'Confirm Sandwich';
+
+  @override
+  String get sandwichLimitExceeded => 'You exceeded the 5 MB limit.';
+
+  @override
+  String get sandwichInsertText => 'Insert text';
+
+  @override
+  String get sandwichCancel => 'Cancel';
+
+  @override
+  String get sandwichOk => 'OK';
+
+  @override
+  String get sandwichItemImage => 'Image';
+
+  @override
+  String get sandwichItemCamera => 'Camera';
+
+  @override
+  String get sandwichItemText => 'Text';
+
+  @override
+  String get sandwichItemAudio => 'Audio';
+
+  @override
+  String sandwichProgress(Object current, Object max) {
+    return '$current MB / $max MB';
+  }
+
+  @override
+  String get encryptHideSandwich => 'Sandwich';
+
+  @override
+  String get sandwichSubtitle =>
+      'You can add multiple files. You cannot exceed the 5 MB limit.';
+
+  @override
+  String get sandwichImportGallery => 'Import from gallery';
 }

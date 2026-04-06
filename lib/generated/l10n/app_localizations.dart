@@ -799,6 +799,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send'**
   String get sendButton;
+
+  /// No description provided for @sandwichTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sandwich'**
+  String get sandwichTitle;
+
+  /// No description provided for @sandwichAddImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get sandwichAddImage;
+
+  /// No description provided for @sandwichAddCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Camera Photo'**
+  String get sandwichAddCamera;
+
+  /// No description provided for @sandwichAddText.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Text'**
+  String get sandwichAddText;
+
+  /// No description provided for @sandwichAddAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Audio'**
+  String get sandwichAddAudio;
+
+  /// No description provided for @sandwichConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Sandwich'**
+  String get sandwichConfirm;
+
+  /// No description provided for @sandwichLimitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'You exceeded the 5 MB limit.'**
+  String get sandwichLimitExceeded;
+
+  /// No description provided for @sandwichInsertText.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert text'**
+  String get sandwichInsertText;
+
+  /// No description provided for @sandwichCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get sandwichCancel;
+
+  /// No description provided for @sandwichOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get sandwichOk;
+
+  /// No description provided for @sandwichItemImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get sandwichItemImage;
+
+  /// No description provided for @sandwichItemCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get sandwichItemCamera;
+
+  /// No description provided for @sandwichItemText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get sandwichItemText;
+
+  /// No description provided for @sandwichItemAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio'**
+  String get sandwichItemAudio;
+
+  /// No description provided for @sandwichProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} MB / {max} MB'**
+  String sandwichProgress(Object current, Object max);
+
+  /// No description provided for @encryptHideSandwich.
+  ///
+  /// In en, this message translates to:
+  /// **'Sandwich'**
+  String get encryptHideSandwich;
+
+  /// No description provided for @sandwichSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add multiple files. You cannot exceed the 5 MB limit.'**
+  String get sandwichSubtitle;
+
+  /// No description provided for @sandwichImportGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from gallery'**
+  String get sandwichImportGallery;
 }
 
 class _AppLocalizationsDelegate

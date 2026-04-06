@@ -6,12 +6,14 @@ import 'package:image/image.dart' as img;
 import 'package:provider/provider.dart';
 
 import '../../widgets/winkwink_scaffold.dart';
-import '../../widgets/mini_neon_button.dart';
 import '../../providers/color_provider.dart';
+import '../../widgets/mini_neon_button.dart';
 import 'package:winkwink/generated/l10n/app_localizations.dart';
 
 class HideImageSecretPage extends StatefulWidget {
-  const HideImageSecretPage({super.key});
+  final String mode; // ⭐ encrypt o sandwich
+
+  const HideImageSecretPage({super.key, this.mode = "encrypt"});
 
   @override
   State<HideImageSecretPage> createState() => _HideImageSecretPageState();
@@ -20,6 +22,17 @@ class HideImageSecretPage extends StatefulWidget {
 class _HideImageSecretPageState extends State<HideImageSecretPage> {
   final ImagePicker _picker = ImagePicker();
   File? hiddenImage;
+
+  String mode = "encrypt"; // ⭐ modalità attuale
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args["mode"] == "sandwich") {
+      mode = "sandwich";
+    }
+  }
 
   // ⭐ Compressione intelligente usando il pacchetto "image"
   Future<File> compressIfNeeded(File file) async {
@@ -30,13 +43,11 @@ class _HideImageSecretPageState extends State<HideImageSecretPage> {
       return file; // troppo piccola → non serve comprimere
     }
 
-    // Leggi i bytes
     final Uint8List bytes = await file.readAsBytes();
     final img.Image? decoded = img.decodeImage(bytes);
 
     if (decoded == null) return file;
 
-    // Ridimensionamento per tablet (1080p)
     final img.Image resized = img.copyResize(
       decoded,
       width: 1920,
@@ -44,7 +55,6 @@ class _HideImageSecretPageState extends State<HideImageSecretPage> {
       interpolation: img.Interpolation.average,
     );
 
-    // Ricompressione JPEG qualità 80
     final List<int> compressedBytes = img.encodeJpg(
       resized,
       quality: 80,
@@ -149,9 +159,11 @@ class _HideImageSecretPageState extends State<HideImageSecretPage> {
               label: l10n.okButton,
               icon: Icons.check,
               onPressed: () {
+                if (hiddenImage == null) return;
+
                 Navigator.pop(context, {
                   "type": "image",
-                  "file": hiddenImage,
+                  "payload": hiddenImage, // ⭐ compatibile con Sandwich
                 });
               },
             ),
