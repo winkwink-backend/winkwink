@@ -8,8 +8,14 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
+  contacts_service_plus: ^0.0.3
+  http: ^1.2.0
+
+  mobile_scanner: ^6.0.2
+
   flutter:
     sdk: flutter
+  flutter_webrtc: ^1.4.1
 
   cupertino_icons: ^1.0.6
 
@@ -35,7 +41,7 @@ dependencies:
   # 📤 Share Sheet
   share_plus: ^7.2.1
 
-  # 🖼 Steganografia
+  # 🖼 Steganografia (immagini)
   image: ^4.1.7
 
   # 🔐 Secure storage
@@ -53,7 +59,7 @@ dependencies:
   # 🧩 State management
   provider: ^6.1.2
 
-  # 🎤 AUDIO
+  # 🎤 AUDIO (solo player/registrazione, NON speech-to-text)
   just_audio: ^0.9.36
   flutter_sound: ^9.2.13
   flutter_sound_platform_interface: ^9.2.13
@@ -62,8 +68,16 @@ dependencies:
   permission_handler: ^11.3.0
 
   # 🔍 QR da immagine (ML Kit)
-  scan: ^1.6.0
   google_mlkit_barcode_scanning: ^0.10.0
+
+  # ⭐ Estrazione frame video
+  video_thumbnail: ^0.5.3
+
+  # 📁 File picker
+  file_picker: ^8.0.0
+
+  audioplayers: ^6.0.0
+
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +86,10 @@ dev_dependencies:
 
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
+
+  build_runner: ^2.4.6
+  flutter_gen_runner: ^5.3.1
+  intl_utils: ^2.8.2
 
 flutter_icons:
   android: true
@@ -82,19 +100,28 @@ flutter_icons:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: "assets/icon/marchiologo_winkwink11.png"
+  image: "assets/icon/marchiologo_winkwink1.png"
   android: true
   ios: true
-
   android_12:
-    image: "assets/icon/marchiologo_winkwink11.png"
+    image: "assets/icon/marchiologo_winkwink1.png"
     icon_background_color: "#FFFFFF"
 
 flutter:
   uses-material-design: true
-  generate: true
 
   assets:
     - assets/
     - assets/icon/
-    - assets/icon/marchiologo_winkwink11.png
+    - assets/icon/marchiologo_winkwink1.png
+    - assets/sounds/wing.mp3
+    - assets/sounds/winkwink.mp3
+    - assets/legal/
+
+
+
+flutter_intl:
+  enabled: true
+
+
+

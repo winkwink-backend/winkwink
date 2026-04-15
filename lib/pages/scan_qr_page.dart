@@ -1,15 +1,15 @@
-import 'dart:io';
-import 'package:camera/camera.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
 
-import '../widgets/mini_neon_button.dart';
-import '../widgets/ww_dialogs.dart';
 import '../widgets/winkwink_scaffold.dart';
 import '../providers/color_provider.dart';
+import '../services/storage_service.dart';
+import '../services/wwgallery_service.dart';
+import 'package:winkwink/generated/l10n.dart';
+import 'package:winkwink/models/ww_contact.dart';
+import 'package:crypto/crypto.dart';
 
 class ScanQrPage extends StatefulWidget {
   const ScanQrPage({super.key});
@@ -19,192 +19,208 @@ class ScanQrPage extends StatefulWidget {
 }
 
 class _ScanQrPageState extends State<ScanQrPage> {
-  final ImagePicker _picker = ImagePicker();
-  CameraController? _cameraController;
-  bool _isScanning = false;
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
+  bool _processing = false;
 
   // ------------------------------------------------------------
-  // 1) SCANSIONE DA GALLERIA
+  // 🔥 PROCESSA IL QR TROVATO
   // ------------------------------------------------------------
-  Future<void> _scanFromGallery(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+  Future<void> _handleQr(String qrData) async {
+    if (_processing) return;
+    _processing = true;
+
+    final l10n = S.of(context)!;
 
     try {
-      final XFile? img = await _picker.pickImage(source: ImageSource.gallery);
-      if (img == null) return;
+      // ============================================================
+      // 1) PROVA NUOVO FORMATO JSON BASE64
+      // ============================================================
+      final contact = _tryParseNewFormat(qrData);
 
-      final file = File(img.path);
-      final inputImage = InputImage.fromFile(file);
-
-      final barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.qrCode]);
-      final barcodes = await barcodeScanner.processImage(inputImage);
-
-      if (barcodes.isEmpty) {
-        await showInfoDialog(context,
-            title: l10n.errorTitle, message: l10n.invalidQr);
+      if (contact != null) {
+        await _saveContact(contact, qrData);
         return;
       }
 
-      final qrData = barcodes.first.rawValue;
-      _handleQrData(context, qrData);
+      // ============================================================
+      // 2) PROVA FORMATO LEGACY "WW|..."
+      // ============================================================
+      final legacy = _tryParseLegacy(qrData);
+
+      if (legacy != null) {
+        await _saveContact(legacy, qrData);
+        return;
+      }
+
+      // ============================================================
+      // 3) QR NON VALIDO
+      // ============================================================
+      _showInfo(l10n.errorTitle, l10n.invalidQr);
     } catch (e) {
-      await showInfoDialog(context, title: "Errore", message: e.toString());
+      _showInfo(l10n.errorTitle, "${l10n.invalidQr}\n$e");
     }
+
+    _processing = false;
   }
 
   // ------------------------------------------------------------
-  // 2) SCANSIONE LIVE DA FOTOCAMERA
+  // ⭐ PARSE NUOVO FORMATO JSON BASE64
   // ------------------------------------------------------------
-  Future<void> _scanFromCamera(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
-
+  WWContact? _tryParseNewFormat(String qrData) {
     try {
-      final cameras = await availableCameras();
-      final camera = cameras.first;
+      // Se non è Base64 valido → fallisce
+      final decoded = utf8.decode(base64Decode(qrData));
+      final json = jsonDecode(decoded);
 
-      _cameraController = CameraController(camera, ResolutionPreset.medium);
-      await _cameraController!.initialize();
+      if (json["type"] != "WW_ID") return null;
+      if (json["version"] != 2) return null;
 
-      setState(() {});
+      // Verifica fingerprint
+      final fingerprint = json["fingerprint"];
+      final tmp = Map<String, dynamic>.from(json);
+      tmp.remove("fingerprint");
 
-      final barcodeScanner = BarcodeScanner(formats: [BarcodeFormat.qrCode]);
+      final check = sha256.convert(utf8.encode(jsonEncode(tmp))).toString();
+      if (check != fingerprint) {
+        throw Exception("Fingerprint mismatch");
+      }
 
-      _cameraController!.startImageStream((CameraImage image) async {
-        if (_isScanning) return;
-        _isScanning = true;
-
-        try {
-          final inputImage =
-              _convertToInputImage(image, camera.sensorOrientation);
-          final barcodes = await barcodeScanner.processImage(inputImage);
-
-          if (barcodes.isNotEmpty) {
-            final qrData = barcodes.first.rawValue;
-            _cameraController?.stopImageStream();
-            _handleQrData(context, qrData);
-          }
-        } catch (_) {}
-
-        _isScanning = false;
-      });
-    } catch (e) {
-      await showInfoDialog(context, title: "Errore", message: e.toString());
+      return WWContact(
+        userId: json["userId"],
+        name: json["firstName"],
+        lastName: json["lastName"],
+        phone: json["phone"],
+        publicKey: json["publicKey"],
+        peerId: json["peerId"],
+        fingerprint: fingerprint,
+        version: 2,
+        qrData: qrData,
+      );
+    } catch (_) {
+      return null;
     }
   }
 
-  InputImage _convertToInputImage(CameraImage image, int rotation) {
-    final plane = image.planes.first;
-    return InputImage.fromBytes(
-      bytes: plane.bytes,
-      metadata: InputImageMetadata(
-        size: Size(image.width.toDouble(), image.height.toDouble()),
-        rotation: InputImageRotationValue.fromRawValue(rotation) ??
-            InputImageRotation.rotation0deg,
-        format: InputImageFormat.nv21,
-        bytesPerRow: plane.bytesPerRow,
-      ),
+  // ------------------------------------------------------------
+  // ⭐ PARSE FORMATO LEGACY "WW|..."
+  // ------------------------------------------------------------
+  WWContact? _tryParseLegacy(String qrData) {
+    if (!qrData.startsWith("WW|")) return null;
+
+    final parts = qrData.split("|");
+    if (parts.length != 6) return null;
+
+    return WWContact(
+      userId: parts[1],
+      name: parts[2],
+      lastName: parts[3],
+      phone: parts[4],
+      publicKey: parts[5],
+      version: 1,
+      qrData: qrData,
     );
   }
 
   // ------------------------------------------------------------
-  // 3) PARSING QR WINKWINK
+  // ⭐ SALVA CONTATTO + QR IN GALLERIA
   // ------------------------------------------------------------
-  void _handleQrData(BuildContext context, String? qrData) async {
-    final l10n = AppLocalizations.of(context)!;
+  Future<void> _saveContact(WWContact contact, String qrData) async {
+    final l10n = S.of(context)!;
 
-    if (qrData == null || !qrData.startsWith("WW|")) {
-      await showInfoDialog(context,
-          title: l10n.errorTitle, message: l10n.invalidQr);
-      return;
-    }
-
-    final parts = qrData.split("|");
-    if (parts.length != 6) {
-      await showInfoDialog(context,
-          title: l10n.errorTitle, message: l10n.invalidQr);
-      return;
-    }
-
-    final contact = {
-      "name": "${parts[2]} ${parts[3]}",
-      "userId": parts[1],
-      "phone": parts[4],
-      "publicKey": parts[5],
-      "qrData": qrData,
-    };
+    await StorageService.saveOrUpdateWWContact(contact);
+    await WWGalleryService.saveQr(qrData);
 
     if (!mounted) return;
-    Navigator.pop(context, contact);
+
+    _showInfo(
+      l10n.contactAddedTitle,
+      "${contact.name} ${contact.lastName} ${l10n.contactAddedMessage}",
+      onClose: () => Navigator.pop(context),
+    );
+
+    _processing = false;
   }
 
   // ------------------------------------------------------------
-  // UI
+  // 🔥 DIALOGO RAPIDO
   // ------------------------------------------------------------
+  void _showInfo(String title, String message, {VoidCallback? onClose}) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: const Text("OK"),
+            onPressed: () {
+              Navigator.pop(context);
+              if (onClose != null) onClose();
+            },
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
     final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(
       showColorSelector: false,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
-          children: [
-            const SizedBox(height: 10),
+      child: Stack(
+        children: [
+          // ------------------------------------------------------------
+          // 🔥 CAMERA LIVE
+          // ------------------------------------------------------------
+          MobileScanner(
+            onDetect: (capture) {
+              final barcodes = capture.barcodes;
+              if (barcodes.isEmpty) return;
 
-            // 🔥 TITOLO NEON
-            Text(
+              final value = barcodes.first.rawValue;
+              if (value == null) return;
+
+              _handleQr(value);
+            },
+          ),
+
+          // ------------------------------------------------------------
+          // 🔲 QUADRATO CENTRALE
+          // ------------------------------------------------------------
+          Center(
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: theme.text,
+                  width: 3,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+
+          // ------------------------------------------------------------
+          // 🔤 TITOLO IN ALTO
+          // ------------------------------------------------------------
+          Positioned(
+            top: 40,
+            left: 0,
+            right: 0,
+            child: Text(
               l10n.scanQrTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: theme.text,
-                shadows: const [
-                  Shadow(
-                    blurRadius: 4,
-                    color: Colors.black,
-                    offset: Offset(1, 1),
-                  ),
-                ],
               ),
             ),
-
-            const SizedBox(height: 12),
-
-            // 🔥 DESCRIZIONE
-            Text(
-              l10n.scanQrDescription,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.black87),
-            ),
-
-            const SizedBox(height: 24),
-
-            // 🔥 IMPORTA DA GALLERIA
-            MiniNeonButton(
-              icon: Icons.photo,
-              label: l10n.scanFromGallery,
-              onPressed: () => _scanFromGallery(context),
-            ),
-
-            const SizedBox(height: 16),
-
-            // 🔥 SCANSIONE LIVE
-            MiniNeonButton(
-              icon: Icons.camera_alt,
-              label: l10n.scanFromCamera,
-              onPressed: () => _scanFromCamera(context),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

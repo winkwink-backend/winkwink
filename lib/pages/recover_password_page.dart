@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
 import '../services/storage_service.dart';
 import '../routes.dart';
@@ -11,7 +11,7 @@ class RecoverPasswordPage extends StatelessWidget {
   const RecoverPasswordPage({super.key});
 
   Future<void> _resetApp(BuildContext context) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -53,7 +53,7 @@ class RecoverPasswordPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
     final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(

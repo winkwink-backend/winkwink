@@ -13,6 +13,8 @@ class ColorProvider extends ChangeNotifier {
   Color get text => _text;
   Color get primary => _primary;
 
+  Color get currentTextColor => _text;
+
   /// Aggiorna il tema dell'intera applicazione.
   void setTheme(Color background, Color text, Color primary) {
     _background = background;

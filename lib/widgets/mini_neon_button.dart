@@ -19,30 +19,51 @@ class MiniNeonButton extends StatelessWidget {
     final theme = Provider.of<ColorProvider>(context);
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      height: 48,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      height: 54, // ⭐ più alto per pulsanti Home
       decoration: BoxDecoration(
-        color: theme.background, // ⭐ colore dinamico
-        borderRadius: BorderRadius.circular(12),
+        color: theme.background.withOpacity(0.9), // ⭐ più elegante
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.text.withOpacity(0.3), // ⭐ bordo dinamico
-          width: 1,
+          color: theme.text.withOpacity(0.35),
+          width: 1.2,
         ),
+        boxShadow: [
+          // ⭐ Effetto neon leggero
+          BoxShadow(
+            color: theme.text.withOpacity(0.25),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: theme.text, size: 20), // ⭐ icona dinamica
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: theme.text, // ⭐ testo dinamico
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+            Icon(
+              icon,
+              color: theme.text,
+              size: 22, // ⭐ leggermente più grande
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: theme.text,
+                  fontSize: 16, // ⭐ più leggibile
+                  fontWeight: FontWeight.w600,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 4,
+                      color: theme.text.withOpacity(0.4),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

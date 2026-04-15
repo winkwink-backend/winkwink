@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 
-import '../services/storage_service.dart';
+import 'package:winkwink/generated/l10n.dart';
+
 import '../services/ecc_service.dart';
-import '../widgets/winkwink_scaffold.dart';
+import '../models/user_profile.dart';
+import '../widgets/neon_button.dart';
+import '../widgets/ww_dialogs.dart';
 import '../routes.dart';
+import '../services/storage_service.dart';
+import '../widgets/winkwink_scaffold.dart';
+import '../services/api_service.dart';
+import '../providers/color_provider.dart';
+
+import '../l10n/legal/legal_localizations.dart';
+
+import 'dart:ui';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,242 +25,453 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final nameController = TextEditingController();
-  final surnameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  final _firstNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
+  bool _obscureConfirm = true;
 
-  bool isAlphanumeric(String s) {
-    final regex = RegExp(r'^[a-zA-Z0-9]+$');
-    return regex.hasMatch(s);
+  bool _legalAccepted = false;
+
+  String _prefix = "+39"; // fallback
+
+  final _ecc = ECCService();
+
+  UserProfile? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefix();
   }
 
-  Future<void> doLogin() async {
-    final l10n = AppLocalizations.of(context)!;
+  // Normalizzazione telefono
+  String normalizePhone(String prefix, String number) {
+    final clean = number.replaceAll(RegExp(r'[^0-9]'), '');
+    final cleanPrefix = prefix.replaceAll(RegExp(r'[^0-9+]'), '');
+    return "$cleanPrefix$clean";
+  }
 
-    final name = nameController.text.trim();
-    final surname = surnameController.text.trim();
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-    final confirm = confirmPasswordController.text.trim();
+  Future<void> _loadPrefix() async {
+    try {
+      final locale = PlatformDispatcher.instance.locale;
+      final iso = locale.countryCode?.toUpperCase();
 
-    if (name.isEmpty ||
-        surname.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.requiredField)),
+      if (iso != null) {
+        final map = {
+          "IT": "+39",
+          "FR": "+33",
+          "DE": "+49",
+          "ES": "+34",
+          "US": "+1",
+        };
+
+        setState(() => _prefix = map[iso] ?? "+39");
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
+    super.dispose();
+  }
+
+  // 🔥 POPUP LEGALE CON SCROLL OBBLIGATORIO
+  Future<bool> _showLegalDialog() async {
+    final legal = LegalLocalizations.of(context);
+
+    bool accepted = false;
+
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  backgroundColor: const Color(0xFF0B0B0F),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                  content: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          legal.get("legal_terms_title"),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Text(
+                              legal.get("legal_terms_text"),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: accepted,
+                              onChanged: (v) {
+                                setState(() => accepted = v ?? false);
+                              },
+                              checkColor: Colors.white,
+                              activeColor: Colors.pinkAccent,
+                            ),
+                            Expanded(
+                              child: Text(
+                                legal.get("legal_checkbox_text"),
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (accepted)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pinkAccent,
+                              ),
+                              onPressed: () {
+                                Navigator.of(dialogContext, rootNavigator: true)
+                                    .pop(true);
+                              },
+                              child: Text(
+                                legal.get("legal_accept_button"),
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ) ??
+        false;
+  }
+
+  Future<void> _submit() async {
+    final l10n = S.of(context)!;
+
+    if (!_formKey.currentState!.validate()) return;
+
+    // 🔥 Verifica password
+    if (_confirmPasswordCtrl.text.trim() != _passwordCtrl.text.trim()) {
+      await showErrorDialog(
+        context,
+        title: "Errore",
+        message: "Le password non coincidono.",
       );
       return;
     }
 
-    if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.passwordsDontMatch)),
+    if (!_legalAccepted) {
+      await showErrorDialog(
+        context,
+        title: "Attenzione",
+        message: l10n.legalMustAccept,
       );
       return;
     }
 
-    if (password.length < 6 || !isAlphanumeric(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.passwordTooShort)),
+    final id = _ecc.generateUserId();
+    final keyPair = await _ecc.generateKeyPair();
+    final publicKey = keyPair.publicKey;
+
+    final normalizedPhone = normalizePhone(_prefix, _phoneCtrl.text.trim());
+
+    final ok = await ApiService.registerUser(
+      phone: normalizedPhone,
+      publicKey: publicKey,
+    );
+
+    if (!ok) {
+      await showErrorDialog(
+        context,
+        title: "Errore server",
+        message: "Impossibile registrare l'utente sul server.",
       );
       return;
     }
 
-    // ------------------------------------------------------------
-    // 🔥 1. Salva profilo utente
-    // ------------------------------------------------------------
+    final qrData = _ecc.generateQrData(
+      firstName: _firstNameCtrl.text.trim(),
+      lastName: _lastNameCtrl.text.trim(),
+      phone: normalizedPhone,
+      userId: id,
+      publicKeyECC: publicKey,
+    );
+
     await StorageService.saveProfile(
-      name: name,
-      surname: surname,
-      email: email,
-      password: password,
+      name: _firstNameCtrl.text.trim(),
+      surname: _lastNameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text.trim(),
     );
 
-    // ------------------------------------------------------------
-    // 🔥 2. Genera coppia ECC personale
-    // ------------------------------------------------------------
-    final ecc = ECCService();
-    final keyPair = await ecc.generateKeyPair();
-
-    await StorageService.saveECCKeys(
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
-    );
-
-    // ------------------------------------------------------------
-    // 🔥 3. Genera userId univoco
-    // ------------------------------------------------------------
-    final userId = ecc.generateUserId();
-
-    // ------------------------------------------------------------
-    // 🔥 4. Genera QR personale (contiene la publicKey)
-    // ------------------------------------------------------------
-    final qrData = ecc.generateQrData(
-      firstName: name,
-      lastName: surname,
-      phone: email, // puoi sostituire con telefono se lo aggiungi
-      userId: userId,
-      publicKeyECC: keyPair.publicKey,
-    );
-
-    await StorageService.saveQrData(qrData);
-
-    // ------------------------------------------------------------
-    // 🔥 5. Flag registrazione
-    // ------------------------------------------------------------
-    await StorageService.setRegistered(true);
     await StorageService.setHasPassword(true);
+    await StorageService.clearQrData();
+    await StorageService.saveQrData(qrData);
+    await StorageService.saveUserId(int.parse(id));
 
-    // ------------------------------------------------------------
-    // 🔥 6. Vai alla Home
-    // ------------------------------------------------------------
+    setState(() {
+      _profile = UserProfile(
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        phone: normalizedPhone,
+        email: _emailCtrl.text.trim(),
+        id: id,
+        qrData: qrData,
+        password: _passwordCtrl.text.trim(),
+      );
+    });
+
+    await showInfoDialog(
+      context,
+      title: l10n.loginIdGeneratedTitle,
+      message: l10n.loginIdGeneratedMessage,
+    );
+
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, AppRoutes.home);
+
+    await StorageService.setLoggedIn(true);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final theme = Provider.of<ColorProvider>(context);
+    final l10n = S.of(context)!;
 
     return WinkWinkScaffold(
+      appBar: AppBar(
+        title: Text(
+          l10n.loginDescriptionShort,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.black.withOpacity(0.4),
+        elevation: 0,
+      ),
       showColorSelector: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Text(
-              l10n.loginDescription,
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 16,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              const SizedBox(height: 12),
+              _rectField(_firstNameCtrl, l10n.firstNameLabel),
+              const SizedBox(height: 12),
+              _rectField(_lastNameCtrl, l10n.lastNameLabel),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    height: 56,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.30),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _prefix,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _rectField(
+                      _phoneCtrl,
+                      l10n.phoneLabel,
+                      keyboard: TextInputType.phone,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return l10n.requiredField;
+                        }
+                        if (v.length < 6) return "Numero non valido";
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 30),
-            _buildField(
-              controller: nameController,
-              label: l10n.firstNameLabel,
-            ),
-            const SizedBox(height: 12),
-            _buildField(
-              controller: surnameController,
-              label: l10n.lastNameLabel,
-            ),
-            const SizedBox(height: 12),
-            _buildField(
-              controller: emailController,
-              label: l10n.emailLabel,
-            ),
-            const SizedBox(height: 12),
-            _buildField(
-              controller: passwordController,
-              label: l10n.passwordLabel,
-              obscure: _obscurePassword,
-              onToggleVisibility: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildField(
-              controller: confirmPasswordController,
-              label: l10n.confirmPasswordLabel,
-              obscure: _obscureConfirmPassword,
-              onToggleVisibility: () {
-                setState(() {
-                  _obscureConfirmPassword = !_obscureConfirmPassword;
-                });
-              },
-            ),
-            const SizedBox(height: 30),
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: doLogin,
-                child: Text(
-                  l10n.generateIdButton,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.faq);
+              const SizedBox(height: 12),
+              _rectField(
+                _emailCtrl,
+                l10n.emailLabel,
+                keyboard: TextInputType.emailAddress,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return l10n.requiredField;
+                  }
+                  if (!v.contains('@') || !v.contains('.')) {
+                    return l10n.invalidEmail;
+                  }
+                  return null;
                 },
-                child: const Text(
-                  "FAQ",
-                  style: TextStyle(color: Colors.black),
+              ),
+              const SizedBox(height: 12),
+
+              // 🔥 Password
+              _rectPassword(
+                _passwordCtrl,
+                l10n.passwordLabel,
+                _obscurePassword,
+                () => setState(() => _obscurePassword = !_obscurePassword),
+              ),
+
+              const SizedBox(height: 12),
+
+              // 🔥 Conferma password
+              _rectPassword(
+                _confirmPasswordCtrl,
+                l10n.confirmPasswordLabel,
+                _obscureConfirm,
+                () => setState(() => _obscureConfirm = !_obscureConfirm),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 🔥 Pulsante accetta note legali
+              ElevatedButton(
+                onPressed: () async {
+                  final accepted = await _showLegalDialog();
+                  if (accepted) {
+                    setState(() => _legalAccepted = true);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _legalAccepted ? Colors.green : Colors.pinkAccent,
+                ),
+                child: Text(
+                  l10n.legalAcceptButton,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
+
+              const SizedBox(height: 20),
+
+              Center(
+                child: NeonButton(
+                  label: l10n.generateIdButton,
+                  onPressed: _legalAccepted
+                      ? _submit
+                      : () async {
+                          await showErrorDialog(
+                            context,
+                            title: "Attenzione",
+                            message: l10n.legalMustAccept,
+                          );
+                        },
+                ),
+              ),
+
+              if (_profile != null) ...[
+                const SizedBox(height: 20),
+                Text(
+                  '${l10n.profileCreatedFor}: ${_profile!.firstName} ${_profile!.lastName}\nID: ${_profile!.id}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    bool obscure = false,
-    VoidCallback? onToggleVisibility,
+  Widget _rectField(
+    TextEditingController ctrl,
+    String label, {
+    TextInputType keyboard = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      style: const TextStyle(color: Colors.black),
+    return TextFormField(
+      controller: ctrl,
+      keyboardType: keyboard,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade700),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Colors.white.withOpacity(0.30),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
         border: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey.shade400),
           borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.black),
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-        suffixIcon: onToggleVisibility == null
-            ? null
-            : IconButton(
-                icon: Icon(
-                  obscure ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.black87,
-                ),
-                onPressed: onToggleVisibility,
-              ),
       ),
+      validator: validator ??
+          (v) =>
+              (v == null || v.trim().isEmpty) ? S.current.requiredField : null,
+    );
+  }
+
+  Widget _rectPassword(
+    TextEditingController ctrl,
+    String label,
+    bool obscure,
+    VoidCallback toggle,
+  ) {
+    return TextFormField(
+      controller: ctrl,
+      obscureText: obscure,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.30),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_off : Icons.visibility,
+            color: Colors.white70,
+          ),
+          onPressed: toggle,
+        ),
+      ),
+      validator: (v) =>
+          (v == null || v.trim().isEmpty) ? S.current.requiredField : null,
     );
   }
 }

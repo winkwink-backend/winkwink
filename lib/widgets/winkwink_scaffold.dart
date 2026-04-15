@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
 import '../providers/color_provider.dart';
+import '../routes.dart';
 
 /// MODELLO COLORE
 class ThemeColorOption {
@@ -21,10 +22,24 @@ class WinkWinkScaffold extends StatelessWidget {
   final Widget child;
   final bool showColorSelector;
 
+  /// userId passato dalla HomePage
+  final int? userId;
+
+  /// supporto appBar
+  final PreferredSizeWidget? appBar;
+
+  /// supporto FAB
+  final Widget? customHeader;
+  final Widget? floatingActionButton;
+
   WinkWinkScaffold({
     super.key,
     required this.child,
     this.showColorSelector = false,
+    this.userId,
+    this.appBar,
+    this.floatingActionButton,
+    this.customHeader,
   });
 
   // PALETTE COLORE DISPONIBILE
@@ -35,25 +50,25 @@ class WinkWinkScaffold extends StatelessWidget {
       primary: Colors.blueAccent,
     ),
     ThemeColorOption(
-      background: Color(0xFF4A4A4A),
-      text: Colors.white,
+      background: Color(0xFF786D46),
+      text: Color.fromARGB(255, 13, 13, 13),
       primary: Colors.cyanAccent,
     ),
     ThemeColorOption(
-      background: Color(0xFF4FC3F7),
+      background: Color(0xFFFFAB94),
       text: Colors.black,
       primary: Colors.blue,
     ),
     ThemeColorOption(
-      background: Color(0xFFFF4FA7),
-      text: Colors.white,
+      background: Color(0xFFFFDCD3),
+      text: Color.fromARGB(255, 28, 27, 27),
       primary: Colors.pinkAccent,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = S.of(context);
     final theme = Provider.of<ColorProvider>(context);
 
     if (l10n == null) return const SizedBox.shrink();
@@ -61,6 +76,8 @@ class WinkWinkScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
+      appBar: appBar,
+      floatingActionButton: floatingActionButton,
       body: Stack(
         children: [
           // SFONDO
@@ -77,35 +94,88 @@ class WinkWinkScaffold extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // HEADER (logo + sottotitolo)
-                Padding(
-                  padding: const EdgeInsets.only(top: 20, left: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Image.asset(
-                        "assets/icon/marchiologo_winkwink1.png",
-                        height: 60,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.winkwinkSubtitle,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 3,
-                              color: Colors.black,
-                              offset: Offset(1, 1),
+                if (customHeader != null) customHeader!,
+
+                // ⭐ HEADER COMPLETO: LOGO + SOTTOTITOLO + ICONE ⭐
+                if (appBar == null)
+                  Padding(
+                    padding:
+                        const EdgeInsets.only(top: 12, left: 12, right: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // LOGO + SOTTOTITOLO
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              "assets/icon/marchiologo_winkwink1.png",
+                              height: 48,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.winkwinkSubtitle,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 3,
+                                    color: Colors.black,
+                                    offset: Offset(1, 1),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
+
+                        // ICONE A DESTRA
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline,
+                                  color: Colors.white),
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.chat,
+                                  arguments: {
+                                    "userId": userId ?? 0,
+                                    "otherId": 0,
+                                    "name": "Chat",
+                                  },
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.notifications_none,
+                                  color: Colors.white),
+                              onPressed: () {
+                                Navigator.pushNamed(context, AppRoutes.inbox);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.people_alt,
+                                  color: Colors.white),
+                              onPressed: () => Navigator.pushNamed(
+                                  context, AppRoutes.contacts),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.settings,
+                                  color: Colors.white),
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                    context, AppRoutes.settings);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
                 const SizedBox(height: 16),
 
@@ -124,7 +194,7 @@ class WinkWinkScaffold extends StatelessWidget {
                   ),
                 ),
 
-                // ⭐ NUOVO SELETTORE COLORE (2 pallini sinistra + 2 destra)
+                // SELETTORE COLORE
                 if (showColorSelector)
                   Padding(
                     padding:
@@ -132,7 +202,6 @@ class WinkWinkScaffold extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // 🔵🔴 lato sinistro
                         Row(
                           children: [
                             _buildColorDot(context, colorOptions[0]),
@@ -140,8 +209,6 @@ class WinkWinkScaffold extends StatelessWidget {
                             _buildColorDot(context, colorOptions[1]),
                           ],
                         ),
-
-                        // 🟢🟣 lato destro
                         Row(
                           children: [
                             _buildColorDot(context, colorOptions[2]),

@@ -1,9 +1,11 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
 import 'providers/color_provider.dart';
-import 'routes.dart'; // 👈 Cambiato da routes/app_routes.dart a routes.dart
+import 'routes.dart';
+import 'l10n/legal/legal_localizations.dart';
 
 class WinkWinkApp extends StatelessWidget {
   const WinkWinkApp({super.key});
@@ -14,24 +16,18 @@ class WinkWinkApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      
-      // Usa solo 'theme'. Se hai 'darkTheme', Flutter lo userà ignorando le tue impostazioni.
+
       theme: ThemeData(
         useMaterial3: true,
-        
-        // Forza la trasparenza su tutti i widget di base
         scaffoldBackgroundColor: Colors.transparent,
         canvasColor: Colors.transparent,
         cardColor: Colors.transparent,
-
         colorScheme: ColorScheme.fromSeed(
-          // Assicurati che nel tuo ColorProvider il campo si chiami 'primary'
-          seedColor: themeProvider.primary, 
+          seedColor: themeProvider.primary,
           brightness: Brightness.dark,
-          surface: Colors.transparent, // "Buca" il nero dei widget Material
+          surface: Colors.transparent,
           onSurface: themeProvider.text,
         ),
-
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: themeProvider.text,
@@ -40,15 +36,21 @@ class WinkWinkApp extends StatelessWidget {
         ),
       ),
 
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      
-      // Gestione sicura del titolo per evitare l'errore Null Check
-      onGenerateTitle: (context) => AppLocalizations.of(context)?.appTitle ?? "WinkWink",
+      localizationsDelegates: [
+        S.delegate,
+        LegalLocalizations.delegate, // <--- IL TUO DELEGATE È QUESTO
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('it'),
+        Locale('en'),
+      ],
 
-      // Usa i nomi corretti definiti nel tuo lib/routes.dart
+      // ⭐ CORRETTO
       initialRoute: AppRoutes.startup,
-      routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }

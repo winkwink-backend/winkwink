@@ -12,7 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../widgets/winkwink_scaffold.dart';
 import '../../widgets/mini_neon_button.dart';
 import '../../providers/color_provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
 class AudioSecretPage extends StatefulWidget {
   final String mode; // encrypt o sandwich
@@ -270,7 +270,7 @@ class _AudioSecretPageState extends State<AudioSecretPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
     final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(

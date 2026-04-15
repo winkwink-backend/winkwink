@@ -1,16 +1,13 @@
-import 'dart:io';
-import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 
-import '../widgets/mini_neon_button.dart';
-import '../services/storage_service.dart';
+import 'package:winkwink/generated/l10n.dart';
+import 'package:winkwink/services/storage_service.dart';
+import 'package:winkwink/providers/color_provider.dart';
+import 'package:winkwink/models/ww_contact.dart';
 import '../widgets/winkwink_scaffold.dart';
-import '../providers/color_provider.dart';
 
 class SendQrPage extends StatefulWidget {
   const SendQrPage({super.key});
@@ -21,191 +18,154 @@ class SendQrPage extends StatefulWidget {
 
 class _SendQrPageState extends State<SendQrPage> {
   String _qrData = 'NESSUN_QR';
+  bool loadingContacts = true;
+  List<Map<String, dynamic>> wwContacts = [];
 
   @override
   void initState() {
     super.initState();
     _loadQr();
+    _loadContacts();
   }
 
+  // ------------------------------------------------------------
+  // 🔥 CARICA IL QR SALVATO (nuovo formato o legacy)
+  // ------------------------------------------------------------
   Future<void> _loadQr() async {
     final savedQr = await StorageService.getQrData();
+
     if (!mounted) return;
 
+    if (savedQr == null) {
+      setState(() => _qrData = 'NESSUN_QR');
+      return;
+    }
+
+    // Verifica se è Base64 valido → nuovo formato
+    bool isBase64 = false;
+    try {
+      final decoded = utf8.decode(base64Decode(savedQr));
+      final json = jsonDecode(decoded);
+
+      if (json is Map && json["type"] == "WW_ID") {
+        isBase64 = true;
+      }
+    } catch (_) {}
+
     setState(() {
-      _qrData = savedQr ?? 'NESSUN_QR';
+      _qrData = savedQr; // sia base64 che legacy funzionano
     });
   }
 
-  Future<void> _showError(String message) async {
-    final l10n = AppLocalizations.of(context)!;
+  // ------------------------------------------------------------
+  // 🔥 CARICA CONTATTI WINKWINK SALVATI
+  // ------------------------------------------------------------
+  Future<void> _loadContacts() async {
+    setState(() => loadingContacts = true);
 
-    return showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(l10n.errorTitle),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.okButton),
-          )
-        ],
-      ),
-    );
+    final saved = await StorageService.getWWContacts();
+    wwContacts = saved.map((c) => c.toJson()).toList();
+
+    setState(() => loadingContacts = false);
   }
 
-  Future<void> _shareQr() async {
-    final l10n = AppLocalizations.of(context)!;
+  // ------------------------------------------------------------
+  // 🔥 INVIO QR (placeholder)
+  // ------------------------------------------------------------
+  Future<void> _sendQrToContact(Map<String, dynamic> c) async {
+    final l10n = S.of(context)!;
 
-    try {
-      final qrValidationResult = QrValidator.validate(
-        data: _qrData,
-        version: QrVersions.auto,
-        errorCorrectionLevel: QrErrorCorrectLevel.M,
-      );
-
-      if (qrValidationResult.status != QrValidationStatus.valid) {
-        return _showError(l10n.invalidQr);
-      }
-
-      final qrCode = qrValidationResult.qrCode!;
-
-      final painter = QrPainter.withQr(
-        qr: qrCode,
-        gapless: true,
-        eyeStyle: const QrEyeStyle(
-          eyeShape: QrEyeShape.square,
-          color: Colors.black,
-        ),
-        dataModuleStyle: const QrDataModuleStyle(
-          dataModuleShape: QrDataModuleShape.square,
-          color: Colors.black,
-        ),
-      );
-
-      final ByteData? imageData = await painter.toImageData(220);
-      if (!mounted) return;
-
-      if (imageData == null) {
-        return _showError(l10n.qrImageError);
-      }
-
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/winkwink_qr.png');
-      await file.writeAsBytes(imageData.buffer.asUint8List());
-
-      await Share.shareXFiles(
-        [
-          XFile(
-            file.path,
-            mimeType: 'image/png',
-          )
-        ],
-        text: l10n.shareQrMessage,
-        subject: l10n.shareQrSubject,
-      );
-    } catch (e) {
-      return _showError(e.toString());
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("${l10n.sendQrSentTo} ${c["name"]}")),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
     final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(
-      showColorSelector: false,
-      child: ListView(
+      appBar: AppBar(
+        backgroundColor: Colors.black.withOpacity(0.4),
+        elevation: 0,
+        title: Text(l10n.sendQrTitle),
+      ),
+      child: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
-          // 🔙 BACK BUTTON
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              iconSize: 36,
-              icon: const Icon(Icons.keyboard_double_arrow_left),
-              color: theme.text,
-              onPressed: () => Navigator.pop(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.sendQrDescription,
+              style: const TextStyle(color: Colors.white),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 24),
 
-          // 🔥 TITOLO NEON
-          Text(
-            l10n.sendQrTitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: theme.text,
-              shadows: const [
-                Shadow(
-                  blurRadius: 4,
-                  color: Colors.black,
-                  offset: Offset(1, 1),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // 🔥 DESCRIZIONE
-          Text(
-            l10n.sendQrDescription,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          // 🔥 QR CODE
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 8,
-                    color: Colors.black26,
-                    offset: Offset(2, 2),
-                  ),
-                ],
-              ),
+            // 🔥 QR GRANDE
+            Center(
               child: QrImageView(
                 data: _qrData,
                 version: QrVersions.auto,
                 size: 220,
                 backgroundColor: Colors.white,
-                eyeStyle: const QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: Colors.black,
-                ),
-                dataModuleStyle: const QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: Colors.black,
-                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 40),
+            const SizedBox(height: 24),
 
-          // 🔥 PULSANTE SHARE
-          MiniNeonButton(
-            label: l10n.forwardButton,
-            icon: Icons.share,
-            onPressed: _shareQr,
-          ),
-        ],
+            Text(
+              l10n.sendQrContactsTitle,
+              style: TextStyle(
+                color: theme.text,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: loadingContacts
+                  ? const Center(child: CircularProgressIndicator())
+                  : wwContacts.isEmpty
+                      ? Text(
+                          l10n.sendQrNoContacts,
+                          style: TextStyle(color: theme.text),
+                        )
+                      : ListView.builder(
+                          itemCount: wwContacts.length,
+                          itemBuilder: (_, i) {
+                            final c = wwContacts[i];
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: theme.background.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ListTile(
+                                title: Text(
+                                  c["name"],
+                                  style: TextStyle(color: theme.text),
+                                ),
+                                subtitle: Text(
+                                  c["phone"],
+                                  style: TextStyle(
+                                    color: theme.text.withOpacity(0.7),
+                                  ),
+                                ),
+                                trailing: ElevatedButton(
+                                  onPressed: () => _sendQrToContact(c),
+                                  child: Text(l10n.sendQrButton),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }

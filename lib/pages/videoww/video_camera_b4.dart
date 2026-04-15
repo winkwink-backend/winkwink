@@ -1,0 +1,408 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:video_player/video_player.dart';
+
+import '../../providers/color_provider.dart';
+
+class VideoCameraB4 extends StatefulWidget {
+  const VideoCameraB4({super.key});
+
+  @override
+  State<VideoCameraB4> createState() => _VideoCameraB4State();
+}
+
+class _VideoCameraB4State extends State<VideoCameraB4>
+    with TickerProviderStateMixin {
+  CameraController? cameraController;
+  List<CameraDescription>? cameras;
+  CameraDescription? currentCamera;
+
+  bool isRecording = false;
+  bool isStopping = false;
+  bool isInitialized = false;
+
+  Timer? recordingTimer;
+  int recordingSeconds = 0;
+
+  XFile? _lastRecordedFile;
+  File? recordedVideo;
+  VideoPlayerController? videoController;
+
+  late AnimationController pulseController;
+  late Animation<double> pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    initCamera();
+
+    pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat(reverse: true);
+
+    pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // INIT CAMERA
+  // ------------------------------------------------------------
+  Future<void> initCamera() async {
+    try {
+      cameras = await availableCameras();
+      if (cameras == null || cameras!.isEmpty) return;
+
+      currentCamera = cameras!.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras!.first,
+      );
+
+      await startCamera(currentCamera!);
+    } catch (e) {
+      debugPrint("❌ Errore initCamera: $e");
+    }
+  }
+
+  Future<void> startCamera(CameraDescription cam) async {
+    cameraController = CameraController(
+      cam,
+      ResolutionPreset.veryHigh,
+      enableAudio: true,
+    );
+
+    try {
+      await cameraController!.initialize();
+      await cameraController!.prepareForVideoRecording();
+    } catch (e) {
+      debugPrint("❌ Errore camera: $e");
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      currentCamera = cam;
+      isInitialized = true;
+    });
+  }
+
+  Future<void> switchCamera() async {
+    if (cameras == null || cameras!.length < 2) return;
+
+    final newCam = cameras!.firstWhere(
+      (c) => c.lensDirection != currentCamera!.lensDirection,
+      orElse: () => cameras!.first,
+    );
+
+    await safeDisposeCamera();
+    setState(() => isInitialized = false);
+
+    await startCamera(newCam);
+  }
+
+  // ------------------------------------------------------------
+  // START RECORDING
+  // ------------------------------------------------------------
+  Future<void> startRecording() async {
+    if (cameraController == null) return;
+    if (!cameraController!.value.isInitialized) return;
+    if (isRecording || isStopping) return;
+
+    try {
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      _lastRecordedFile = null;
+
+      await cameraController!.startVideoRecording();
+
+      setState(() {
+        isRecording = true;
+        recordingSeconds = 0;
+      });
+
+      recordingTimer?.cancel();
+      recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!isRecording) return;
+
+        setState(() => recordingSeconds++);
+
+        if (recordingSeconds >= 40) {
+          stopRecording();
+        }
+      });
+    } catch (e) {
+      debugPrint("❌ Errore start: $e");
+      setState(() => isRecording = false);
+    }
+  }
+
+  // ------------------------------------------------------------
+  // STOP RECORDING
+  // ------------------------------------------------------------
+  Future<void> stopRecording() async {
+    if (!isRecording || isStopping) return;
+    if (cameraController == null) return;
+
+    setState(() => isStopping = true);
+    recordingTimer?.cancel();
+
+    try {
+      final file = await cameraController!.stopVideoRecording();
+      _lastRecordedFile = file;
+      recordedVideo = File(file.path);
+
+      await loadVideo();
+    } catch (e) {
+      debugPrint("❌ Errore stop: $e");
+    } finally {
+      setState(() {
+        isRecording = false;
+        isStopping = false;
+      });
+    }
+  }
+
+  // ------------------------------------------------------------
+  // LOAD VIDEO PLAYER
+  // ------------------------------------------------------------
+  Future<void> loadVideo() async {
+    await safeDisposeVideo();
+
+    if (recordedVideo == null) return;
+
+    videoController = VideoPlayerController.file(recordedVideo!);
+
+    try {
+      await videoController!.initialize();
+      await videoController!.setVolume(1.0);
+    } catch (e) {
+      debugPrint("❌ Errore VideoPlayer: $e");
+    }
+
+    setState(() {});
+  }
+
+  // ------------------------------------------------------------
+  // DISPOSE HELPERS
+  // ------------------------------------------------------------
+  Future<void> safeDisposeCamera() async {
+    try {
+      await cameraController?.dispose();
+    } catch (_) {}
+    cameraController = null;
+  }
+
+  Future<void> safeDisposeVideo() async {
+    try {
+      await videoController?.dispose();
+    } catch (_) {}
+    videoController = null;
+  }
+
+  void deleteVideo() async {
+    await safeDisposeVideo();
+
+    setState(() {
+      recordedVideo = null;
+      _lastRecordedFile = null;
+    });
+
+    if (currentCamera != null) {
+      await startCamera(currentCamera!);
+    }
+  }
+
+  @override
+  void dispose() {
+    recordingTimer?.cancel();
+    pulseController.dispose();
+    safeDisposeCamera();
+    safeDisposeVideo();
+    super.dispose();
+  }
+
+  // ------------------------------------------------------------
+  // UI HELPERS
+  // ------------------------------------------------------------
+  Widget framed(Widget child, Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: color, width: 4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: child,
+      ),
+    );
+  }
+
+  Widget recordButton(Color color) {
+    return ScaleTransition(
+      scale: isRecording ? pulseAnimation : const AlwaysStoppedAnimation(1.0),
+      child: Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 6),
+          boxShadow: [
+            if (isRecording)
+              BoxShadow(
+                color: color.withOpacity(0.7),
+                blurRadius: 25,
+                spreadRadius: 5,
+              ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: () => isRecording ? stopRecording() : startRecording(),
+          child: Center(
+            child: Container(
+              width: 65,
+              height: 65,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isRecording ? Colors.redAccent : color,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget glowButton(IconData icon, VoidCallback onTap, Color color) {
+    return Container(
+      width: 65,
+      height: 65,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.6),
+            blurRadius: 20,
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: Colors.black, size: 32),
+        onPressed: onTap,
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // BUILD
+  // ------------------------------------------------------------
+  @override
+  Widget build(BuildContext context) {
+    final theme = Provider.of<ColorProvider>(context);
+    final double percentTime = recordingSeconds / 40;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // CAMERA PREVIEW
+          if (recordedVideo == null)
+            Positioned.fill(
+              child: isInitialized
+                  ? framed(
+                      AspectRatio(
+                        aspectRatio: cameraController!.value.aspectRatio,
+                        child: CameraPreview(cameraController!),
+                      ),
+                      theme.primary,
+                    )
+                  : const Center(child: CircularProgressIndicator()),
+            ),
+
+          // VIDEO PLAYER
+          if (recordedVideo != null &&
+              videoController != null &&
+              videoController!.value.isInitialized)
+            Positioned.fill(
+              child: Center(
+                child: framed(
+                  AspectRatio(
+                    aspectRatio: videoController!.value.aspectRatio,
+                    child: VideoPlayer(videoController!),
+                  ),
+                  theme.primary,
+                ),
+              ),
+            ),
+
+          // TIMER + BARRA TEMPO
+          Positioned(
+            top: 40,
+            left: 20,
+            right: 20,
+            child: Column(
+              children: [
+                Text(
+                  "${recordingSeconds}s / 40s",
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: percentTime,
+                  backgroundColor: Colors.white24,
+                  color: recordingSeconds <= 30
+                      ? Colors.greenAccent
+                      : Colors.redAccent,
+                  minHeight: 10,
+                ),
+              ],
+            ),
+          ),
+
+          // BARRA INFERIORE (REC)
+          if (recordedVideo == null)
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  glowButton(
+                      Icons.close, () => Navigator.pop(context), theme.primary),
+                  recordButton(theme.primary),
+                  glowButton(Icons.cameraswitch, switchCamera, theme.primary),
+                ],
+              ),
+            ),
+
+          // POST-REGISTRAZIONE
+          if (recordedVideo != null)
+            Positioned(
+              bottom: 40,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  glowButton(Icons.delete, deleteVideo, theme.primary),
+                  glowButton(
+                    Icons.check,
+                    () => Navigator.pop(context, {"file": recordedVideo}),
+                    theme.primary,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

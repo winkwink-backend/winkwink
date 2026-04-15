@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:contacts_service_plus/contacts_service_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
+import 'package:winkwink/generated/l10n.dart';
 import '../widgets/winkwink_scaffold.dart';
 import '../providers/color_provider.dart';
+import 'package:winkwink/config/app_config.dart';
+import 'package:winkwink/services/storage_service.dart';
 
 class ContactsPage extends StatefulWidget {
   const ContactsPage({super.key});
@@ -13,172 +19,206 @@ class ContactsPage extends StatefulWidget {
 }
 
 class _ContactsPageState extends State<ContactsPage> {
-  bool selectionMode = false;
+  bool loading = true;
 
-  final List<Map<String, String>> contacts = [
-    {
-      "name": "Alice",
-      "qrData": "QR_ALICE_123456",
-      "publicKey": "ECC_PUBLIC_KEY_ALICE"
-    },
-    {
-      "name": "Bob",
-      "qrData": "QR_BOB_987654",
-      "publicKey": "ECC_PUBLIC_KEY_BOB"
-    },
-    {
-      "name": "Carlo",
-      "qrData": "QR_CARLO_555555",
-      "publicKey": "ECC_PUBLIC_KEY_CARLO"
-    },
-  ];
-
-  final Set<int> selectedIndexes = {};
+  List<Map<String, dynamic>> wwContacts = [];
+  List<Map<String, dynamic>> nonWwContacts = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void initState() {
+    super.initState();
+    _loadContacts();
+  }
 
-    final args = ModalRoute.of(context)?.settings.arguments;
+  Future<void> _loadContacts() async {
+    setState(() => loading = true);
 
-    if (args is Map && args["selectionMode"] == true) {
-      selectionMode = true;
+    // 🔥 1. Contatti WinkWink salvati internamente
+    final saved = await StorageService.getWWContacts();
+    List<Map<String, dynamic>> ww = saved.map((c) => c.toJson()).toList();
+    List<Map<String, dynamic>> nonWw = [];
+
+    // 🔥 2. Contatti della rubrica
+    final status = await Permission.contacts.request();
+    if (status.isGranted) {
+      final Iterable<Contact> deviceContacts =
+          await ContactsService.getContacts(withThumbnails: false);
+
+      for (final c in deviceContacts) {
+        if (c.phones == null || c.phones!.isEmpty) continue;
+
+        final phone = c.phones!.first.value?.replaceAll(" ", "") ?? "";
+        if (phone.isEmpty) continue;
+
+        try {
+          final res = await http.get(
+            Uri.parse("${AppConfig.baseUrl}/users/check?phone=$phone"),
+          );
+
+          if (res.statusCode == 200) {
+            final data = jsonDecode(res.body);
+
+            if (data["exists"] == true) {
+              // Evita duplicati
+              if (!ww.any((x) => x["userId"] == data["userId"])) {
+                ww.add({
+                  "name": c.displayName ?? "Senza nome",
+                  "lastName": "",
+                  "phone": phone,
+                  "userId": data["userId"],
+                  "publicKey": null,
+                  "qrData": "",
+                });
+              }
+            } else {
+              nonWw.add({
+                "name": c.displayName ?? "Senza nome",
+                "phone": phone,
+              });
+            }
+          }
+        } catch (_) {}
+      }
     }
+
+    setState(() {
+      wwContacts = ww;
+      nonWwContacts = nonWw;
+      loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
     final theme = Provider.of<ColorProvider>(context);
 
     return WinkWinkScaffold(
       showColorSelector: false,
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
+      child: loading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const SizedBox(height: 10),
 
-          // 🔥 TITOLO
-          Text(
-            selectionMode ? l10n.encryptSelectRecipients : l10n.contactsTitle,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: theme.text,
-              shadows: const [
-                Shadow(
-                  blurRadius: 3,
-                  color: Colors.black,
-                  offset: Offset(1, 1),
+                Text(
+                  l10n.contactsTitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: theme.text,
+                  ),
                 ),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 10),
+                const SizedBox(height: 20),
 
-          // 🔥 LISTA CONTATTI
-          Expanded(
-            child: ListView.builder(
-              itemCount: contacts.length,
-              itemBuilder: (context, index) {
-                final c = contacts[index];
-                final selected = selectedIndexes.contains(index);
-
-                return Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.background.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: selected
-                          ? theme.background
-                          : theme.text.withOpacity(0.3),
-                      width: selected ? 2 : 1,
+                // ⭐ CONTATTI WINKWINK
+                if (wwContacts.isNotEmpty)
+                  Text(
+                    "Contatti WinkWink",
+                    style: TextStyle(
+                      color: theme.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: ListTile(
-                    title: Text(
-                      c["name"]!,
-                      style: TextStyle(
-                        color: theme.text,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+
+                ...wwContacts.map((c) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.background.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        c["name"],
+                        style: TextStyle(color: theme.text),
+                      ),
+                      subtitle: Text(
+                        c["phone"],
+                        style: TextStyle(color: theme.text.withOpacity(0.7)),
+                      ),
+
+                      // ⭐ CHAT + QR
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.chat, color: theme.text),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                "/chat",
+                                arguments: {
+                                  "otherId": c["userId"],
+                                  "name": c["name"],
+                                },
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.qr_code, color: theme.text),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                "/sendQr",
+                                arguments: {"userId": c["userId"]},
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
+                  );
+                }),
 
-                    // 👇 QR INVISIBILE
-                    subtitle: const SizedBox.shrink(),
+                const SizedBox(height: 30),
 
-                    trailing: selectionMode
-                        ? Checkbox(
-                            value: selected,
-                            activeColor: theme.background,
-                            checkColor: theme.text,
-                            onChanged: (_) {
-                              setState(() {
-                                if (selected) {
-                                  selectedIndexes.remove(index);
-                                } else {
-                                  selectedIndexes.add(index);
-                                }
-                              });
-                            },
-                          )
-                        : Icon(Icons.chevron_right, color: theme.text),
-
-                    onTap: () {
-                      if (!selectionMode) {
-                        // TODO: dettaglio contatto
-                      } else {
-                        setState(() {
-                          if (selected) {
-                            selectedIndexes.remove(index);
-                          } else {
-                            selectedIndexes.add(index);
-                          }
-                        });
-                      }
-                    },
+                // ⭐ CONTATTI NON WINKWINK
+                if (nonWwContacts.isNotEmpty)
+                  Text(
+                    "Invita su WinkWink",
+                    style: TextStyle(
+                      color: theme.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                );
-              },
+
+                ...nonWwContacts.map((c) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: theme.background.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        c["name"],
+                        style: TextStyle(color: theme.text),
+                      ),
+                      subtitle: Text(
+                        c["phone"],
+                        style: TextStyle(color: theme.text.withOpacity(0.7)),
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.send, color: theme.text),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Invito inviato a ${c["name"]}"),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                }),
+              ],
             ),
-          ),
-
-          // 🔥 FOOTER SOLO IN MODALITÀ SELEZIONE
-          if (selectionMode)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.background,
-                  foregroundColor: theme.text,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () {
-                  final selectedContacts =
-                      selectedIndexes.map((i) => contacts[i]).toList();
-
-                  Navigator.pop(context, selectedContacts);
-                },
-                child: Text(
-                  l10n.forwardButton,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

@@ -4,13 +4,13 @@ import '../providers/color_provider.dart';
 
 class NeonButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // ✔ ora nullable
   final IconData? icon;
 
   const NeonButton({
     super.key,
     required this.label,
-    required this.onPressed,
+    this.onPressed, // ✔ non required
     this.icon,
   });
 
@@ -37,7 +37,7 @@ class NeonButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        onPressed: onPressed,
+        onPressed: onPressed, // ✔ accetta null
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

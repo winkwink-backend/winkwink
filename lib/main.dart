@@ -8,7 +8,7 @@ import 'providers/color_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 NECESSARIO PER USARE media_kit
+  // Necessario per media_kit
   MediaKit.ensureInitialized();
 
   runApp(

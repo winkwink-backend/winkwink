@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
-import '../widgets/winkwink_scaffold.dart';
 import '../services/storage_service.dart';
 import '../routes.dart';
+import '../widgets/neon_button.dart';
+import '../widgets/winkwink_scaffold.dart';
 
 class PasswordGatePage extends StatefulWidget {
   const PasswordGatePage({super.key});
@@ -13,161 +14,100 @@ class PasswordGatePage extends StatefulWidget {
 }
 
 class _PasswordGatePageState extends State<PasswordGatePage> {
-  final TextEditingController _passwordController = TextEditingController();
-  bool _wrongPassword = false;
-
-  // ⭐ NUOVO: mostra/nascondi password
-  bool _obscurePassword = true;
+  final _passwordCtrl = TextEditingController();
+  String? _error;
 
   Future<void> _checkPassword() async {
-    final savedPassword = await StorageService.getPassword();
-    if (_passwordController.text == savedPassword) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-    } else {
-      setState(() {
-        _wrongPassword = true;
-      });
+    final l10n = S.of(context)!;
+
+    final saved = await StorageService.getPassword();
+    if (!mounted) return;
+
+    if (saved == null) {
+      setState(() => _error = l10n.noPasswordSaved);
+      return;
     }
+
+    if (_passwordCtrl.text.trim() != saved) {
+      setState(() => _error = l10n.wrongPassword);
+      return;
+    }
+
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
 
     return WinkWinkScaffold(
+      appBar: AppBar(
+        title: Text(
+          l10n.passwordGateTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.black.withOpacity(0.4),
+        elevation: 0,
+      ),
       showColorSelector: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            // 🔥 TITOLO
-            Text(
-              l10n.passwordGateTitle,
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                shadows: [
-                  Shadow(
-                    blurRadius: 4,
-                    color: Colors.black87,
-                    offset: Offset(1, 1),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 10),
-
-            // 🔥 SOTTOTITOLO
             Text(
               l10n.passwordGateDescription,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 18,
-                color: Colors.black87,
+                fontSize: 16,
+                color: Colors.white70,
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
 
-            // 🔥 CAMPO PASSWORD CON OCCHIO
+            // 🔥 Campo password rettangolare
             TextField(
-              controller: _passwordController,
-              obscureText: _obscurePassword,
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-              ),
+              controller: _passwordCtrl,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: l10n.passwordLabelShort,
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 18,
-                ),
-                floatingLabelBehavior: FloatingLabelBehavior.never,
                 filled: true,
-                fillColor: Colors.black.withOpacity(0.35),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 20,
-                ),
+                fillColor: Colors.white.withOpacity(0.30),
+                labelText: l10n.passwordLabelShort,
+                labelStyle: const TextStyle(color: Colors.white70),
+                errorText: _error,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: Colors.white.withOpacity(0.4),
-                    width: 1.2,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1.2,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Colors.white,
-                    width: 1.4,
-                  ),
-                ),
-
-                // ⭐ AGGIUNTA: icona occhio
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 32),
 
-            if (_wrongPassword)
-              Text(
-                l10n.wrongPassword,
+            NeonButton(
+              label: l10n.accessButton,
+              onPressed: _checkPassword,
+            ),
+
+            const SizedBox(height: 24),
+
+            // 🔥 Link recupero password
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).pushNamed(AppRoutes.passwordResetRequest);
+              },
+              child: Text(
+                l10n.forgotPassword,
                 style: const TextStyle(
-                  color: Colors.redAccent,
-                  fontSize: 16,
-                ),
-              ),
-
-            const SizedBox(height: 40),
-
-            // 🔘 BOTTONE ACCEDI
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: _checkPassword,
-                child: Text(
-                  l10n.accessButton,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  color: Colors.white70,
+                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
-
-            const SizedBox(height: 20),
           ],
         ),
       ),

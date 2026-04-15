@@ -6,6 +6,9 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:encrypt/encrypt.dart' as enc;
 
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'ecc_service.dart';
 import 'steganography_service.dart';
 
@@ -14,6 +17,7 @@ enum PayloadType {
   text,
   image,
   audio,
+  video,
 }
 
 class CryptoService {
@@ -25,11 +29,14 @@ class CryptoService {
   // ENCRYPT
   // -------------------------------------------------------------
   Future<File> encrypt({
-    required String visibleImagePath,
+    required String visibleImagePath, // può essere immagine O video
     required List<String> sharedSecrets,
     required List<int> payloadBytes,
     required PayloadType type,
   }) async {
+    // 0) Assicuriamoci di avere una IMMAGINE come carrier
+    final carrierPath = await _ensureImageCarrier(visibleImagePath);
+
     // 1) Deriva chiavi AES (una per destinatario)
     final aesKeys = sharedSecrets.map(_deriveAesKey).toList();
 
@@ -46,9 +53,9 @@ class CryptoService {
     // 4) Combina header + payload cifrato
     final fullPayload = [...header, ...encryptedPayload];
 
-    // 5) Steganografia LSB
+    // 5) Steganografia LSB su IMMAGINE (anche se il flusso parte da video)
     final output = await _steg.embedPayload(
-      imagePath: visibleImagePath,
+      imagePath: carrierPath,
       payload: fullPayload,
     );
 
@@ -58,7 +65,8 @@ class CryptoService {
   // -------------------------------------------------------------
   // DECRYPT
   // -------------------------------------------------------------
-  Future<({PayloadType type, List<int> bytes})> decrypt(String imagePath) async {
+  Future<({PayloadType type, List<int> bytes})> decrypt(
+      String imagePath) async {
     // 1) Estrai payload dall’immagine
     final extracted = await _steg.extractPayload(imagePath: imagePath);
 
@@ -103,8 +111,7 @@ class CryptoService {
     }
 
     // 9) Payload cifrato
-    final encryptedPayload =
-        extracted.sublist(index, index + payloadLength);
+    final encryptedPayload = extracted.sublist(index, index + payloadLength);
 
     // 10) Ricostruisci la tua shared secret
     final myPrivateKey = await _storage.read(key: 'privateKeyECC');
@@ -205,5 +212,37 @@ class CryptoService {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  // -------------------------------------------------------------
+  // MEDIA → IMMAGINE CARRIER
+  // -------------------------------------------------------------
+  Future<String> _ensureImageCarrier(String path) async {
+    final lower = path.toLowerCase();
+
+    // Se è già un'immagine, usala direttamente
+    if (lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp')) {
+      return path;
+    }
+
+    // Altrimenti assumiamo che sia un VIDEO → estraiamo un frame
+    final tempDir = await getTemporaryDirectory();
+
+    final String? framePath = await VideoThumbnail.thumbnailFile(
+      video: path,
+      thumbnailPath: tempDir.path,
+      imageFormat: ImageFormat.PNG,
+      maxHeight: 720,
+      quality: 90,
+    );
+
+    if (framePath == null) {
+      throw Exception('Impossibile estrarre un frame dal video');
+    }
+
+    return framePath;
   }
 }

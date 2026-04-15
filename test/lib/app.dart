@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import '../../lib/generated/app_localizations.dart';
 import 'routes.dart';
 
 class WinkWinkApp extends StatelessWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:winkwink/generated/l10n/app_localizations.dart';
+import 'package:winkwink/generated/l10n.dart';
 
 import '../services/storage_service.dart';
 import '../routes.dart';
@@ -15,34 +15,50 @@ class _StartupPageState extends State<StartupPage> {
   @override
   void initState() {
     super.initState();
-    _checkStartupFlow();
+    _checkLogin();
   }
 
-  Future<void> _checkStartupFlow() async {
-    final isRegistered = await StorageService.isRegistered();
-    final hasPassword = await StorageService.getHasPassword();
+  Future<void> _checkLogin() async {
+    // ⭐ 1) L’utente ha fatto login?
+    final loggedIn = await StorageService.isLoggedIn();
 
-    if (!mounted) return;
-
-    // 🔥 Primo avvio → Login
-    if (!isRegistered) {
+    if (!loggedIn) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.login);
       return;
     }
 
-    // 🔥 Utente registrato → deve passare dal PasswordGate
-    if (hasPassword) {
+    // ⭐ 2) L’utente ha una password?
+    final hasPassword = await StorageService.getHasPassword();
+
+    if (!hasPassword) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.passwordGate);
       return;
     }
 
-    // 🔥 Caso finale → Home
-    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    // ⭐ 3) Ha un profilo valido?
+    final profile = await StorageService.getProfile();
+    final email = profile["email"];
+    final password = profile["password"];
+
+    if (email == null || password == null) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+      return;
+    }
+
+    // ⭐ 4) Ha un userId?
+    final userId = await StorageService.getUserId();
+    if (userId == null) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+      return;
+    }
+
+    // ⭐ Tutto ok → Home
+    Navigator.of(context).pushReplacementNamed(AppRoutes.passwordGate);
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = S.of(context)!;
 
     return Scaffold(
       body: Center(
